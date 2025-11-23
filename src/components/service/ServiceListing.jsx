@@ -1,0 +1,853 @@
+import React, { useState, useEffect, useRef } from "react";
+import FilterIcon from "../assets/rivet-icons_filter.svg";
+import CategoriesIcon from "../assets/iconamoon_category-light.svg";
+import DistanceIcon from "../assets/mdi_map-marker-distance.svg";
+import ArrowIcon from "../assets/weui_arrow-filled (1).svg";
+import ServiceCardGrid from "./ServiceCardGrid";
+import PartnerSection from "../home/PartnerSection";
+import category from "../../api/category.js";
+import subCategory from "../../api/subCategory.js";
+import providers from "../../api/providers";
+import { useLoc } from "../context/LocationContext";
+import { useNavigate, useLocation } from "react-router-dom";
+
+// Distance filter options
+const distances = [
+  { id: 1, text: "Nearby (0 - 5km)", min: 0, max: 5 },
+  { id: 2, text: "5 - 10km", min: 5, max: 10 },
+  { id: 3, text: "10 - 25km", min: 10, max: 25 },
+  { id: 4, text: "25 - 50km", min: 25, max: 50 },
+  { id: 5, text: "50km and more", min: 50, max: Infinity },
+];
+
+function ServiceListing() {
+  const navigate = useNavigate();
+  const locationRouter = useLocation();
+
+  const { location } = useLoc();
+  const { categoryState, subCategoryState } = useLocation().state || {};
+  const [showCategories, setShowCategories] = useState(false);
+  const [showDistance, setShowDistance] = useState(false);
+  const [categoryList, setCategoryList] = useState([]);
+  const [subCategoryList, setSubCategoryList] = useState([]);
+  const [selectedCategory, setSelectedCategory] = useState(
+    categoryState ?? {
+      ID: 0,
+      Name: "",
+    }
+  );
+  const [selectedSubCategory, setSelectedSubCategory] = useState(
+    subCategoryState ?? {
+      ID: 0,
+      Name: "",
+    }
+  );
+  const [selectedDistance, setSelectedDistance] = useState({});
+  const [openNested, setOpenNested] = useState(null);
+  const [mergedCatFilter, setMergedCatFilter] = useState([]);
+  const [filteredData, setFilteredData] = useState([]);
+
+  // Separate refs for DESKTOP and MOBILE to avoid collisions
+  const categoriesRefDesktop = useRef(null);
+  const categoriesRefMobile = useRef(null);
+  const distanceRefDesktop = useRef(null);
+  const distanceRefMobile = useRef(null);
+
+  const toSlug = (str) =>
+    str
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, "-")
+      .replace(/(^-|-$)+/g, "");
+
+  //Restore filters from sessionStorage
+  {
+    /* useEffect(() => {
+    const savedCategory = sessionStorage.getItem("serviceselectedCategory");
+    const savedSubCategory = sessionStorage.getItem("serviceselectedSubCategory");
+    const savedDistance = sessionStorage.getItem("serviceselectedDistance");
+
+    if (savedCategory) setSelectedCategory(JSON.parse(savedCategory));
+    if (savedSubCategory) setSelectedSubCategory(JSON.parse(savedSubCategory));
+    if (savedDistance) setSelectedDistance(JSON.parse(savedDistance));
+  }, []);
+
+  //Save filters to sessionStorage when changed
+  useEffect(() => {
+    if (selectedCategory?.ID) {
+      sessionStorage.setItem("serviceselectedCategory", JSON.stringify(selectedCategory));
+    }
+  }, [selectedCategory]);
+
+  useEffect(() => {
+    if (selectedSubCategory?.ID) {
+      sessionStorage.setItem("serviceselectedSubCategory", JSON.stringify(selectedSubCategory));
+    }
+  }, [selectedSubCategory]);
+
+  useEffect(() => {
+    if (selectedDistance?.min !== undefined) {
+      sessionStorage.setItem("serviceselectedDistance", JSON.stringify(selectedDistance));
+    }
+  }, [selectedDistance]);
+
+  */
+  }
+
+  //Parse from URL only if no saved filters exist
+  useEffect(() => {
+    // const hasSaved =
+    // sessionStorage.getItem("serviceselectedCategory") ||
+    // sessionStorage.getItem("serviceselectedSubCategory") ||
+    // sessionStorage.getItem("serviceselectedDistance");
+
+    // if (hasSaved) return;
+
+    const parts = locationRouter.pathname.split("/").filter(Boolean);
+    // Parse category
+    if (parts[1]) {
+      const [catID, ...catSlug] = parts[1].split("-");
+      const newCategory = { ID: parseInt(catID), Name: catSlug.join("-") };
+      if (
+        selectedCategory.ID !== newCategory.ID ||
+        selectedCategory.Name !== newCategory.Name
+      ) {
+        setSelectedCategory(newCategory);
+        setSelectedSubCategory({ ID: 0, Name: "" }); // reset subcategory
+      }
+    }
+
+    // Parse subcategory
+    if (parts[2]) {
+      const [subID, ...subSlug] = parts[2].split("-");
+      const newSubCategory = { ID: parseInt(subID), Name: subSlug.join("-") };
+      if (
+        selectedSubCategory.ID !== newSubCategory.ID ||
+        selectedSubCategory.Name !== newSubCategory.Name
+      ) {
+        setSelectedSubCategory(newSubCategory);
+      }
+    }
+
+    const params = new URLSearchParams(locationRouter.search);
+    const min = params.get("min");
+    const max = params.get("max");
+
+    if (min !== null || max !== null) {
+      const minVal = min !== null ? parseFloat(min) : 0;
+      const maxVal = max !== null ? parseFloat(max) : Infinity;
+
+      setSelectedDistance({
+        min: minVal,
+        max: maxVal,
+        text:
+          maxVal === Infinity
+            ? `${minVal}km and more`
+            : `${minVal} - ${maxVal}km`,
+      });
+    }
+  }, [locationRouter.pathname, locationRouter.search]);
+
+  // Update URL when filters change
+  useEffect(() => {
+    const params = new URLSearchParams();
+
+    if (selectedDistance.min !== undefined)
+      params.set("min", selectedDistance.min);
+    if (
+      selectedDistance.max !== undefined &&
+      selectedDistance.max !== Infinity
+    ) {
+      params.set("max", selectedDistance.max);
+    }
+
+    let path = "/service";
+
+    if (selectedCategory?.ID && selectedCategory?.Name) {
+      path += `/${selectedCategory.ID}-${toSlug(selectedCategory.Name)}`;
+    }
+
+    if (selectedSubCategory?.ID && selectedSubCategory?.Name) {
+      path += `/${selectedSubCategory.ID}-${toSlug(selectedSubCategory.Name)}`;
+    }
+
+    const newUrl = `${path}?${params.toString()}`;
+
+    // Only navigate if URL is different
+    if (newUrl !== locationRouter.pathname + locationRouter.search) {
+      navigate(
+        { pathname: path, search: params.toString() },
+        { replace: true }
+      );
+    }
+  }, [
+    selectedCategory,
+    selectedSubCategory,
+    selectedDistance?.min,
+    selectedDistance?.max,
+    locationRouter.pathname,
+    locationRouter.search,
+    navigate,
+  ]);
+
+  // Load category + subcategory
+  useEffect(() => {
+    category.getAllCategory().then((res) => {
+      setCategoryList(res.data[0]);
+    });
+    subCategory.getAllSubCategory().then((res) => {
+      setSubCategoryList(res.data[0]);
+    });
+  }, []);
+
+  // Merge categories with subcategories
+  useEffect(() => {
+    const merged = categoryList.map((cat) => ({
+      ...cat,
+      subcategories: subCategoryList
+        .filter((sub) => sub.CatID === cat.ID)
+        .map((sub) => ({ ID: sub.ID, SubCatName: sub.SubCatName })),
+    }));
+    setMergedCatFilter(merged);
+  }, [categoryList, subCategoryList]);
+
+  // Fetch providers when filters change
+  useEffect(() => {
+    const parts = locationRouter.pathname.split("/").filter(Boolean);
+    if (parts[1] && selectedCategory.ID == 0) {
+      return;
+    }
+    if (location.lat && location.lng) {
+      // if(isUrlCatRef.current)
+      //  let param = {
+      //  category: selectedCategory?.ID ?? 0,
+      //  subCategory: selectedSubCategory?.ID ?? 0,
+      //  location: { ...location },
+      //  distanceMin: selectedDistance.min ?? 0,
+      //  distanceMax: selectedDistance.max ?? Infinity,
+      // };
+      let param = {
+        category: selectedCategory.ID,
+        subCategory: selectedSubCategory?.ID,
+        location: { ...location },
+        distanceMin: selectedDistance.min,
+        distanceMax: selectedDistance.max,
+      };
+      // console.log(selectedCategory.ID);
+      // console.log(selectedSubCategory?.ID);
+      providers.getProvidersByFilter(param).then((res) => {
+        if (res.data?.length) {
+          setFilteredData(
+            res.data?.map((x) => ({
+              id: x.ID,
+              image: x.imageURL,
+              subCatName: x.subCatName,
+              providerName: x.providerName,
+              city: x.city,
+              area: x.area,
+            }))
+          );
+        } else {
+          setFilteredData([]);
+        }
+      });
+    }
+  }, [
+    selectedCategory.ID,
+    selectedSubCategory.ID,
+    selectedDistance.min,
+    selectedDistance.max,
+    location.lat,
+    location.lng,
+  ]);
+
+  // Handle click outside to close dropdowns
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      const inDesktopCat = categoriesRefDesktop.current?.contains(event.target);
+      const inMobileCat = categoriesRefMobile.current?.contains(event.target);
+      const inSubcategoryPanel = !!event.target.closest(".subcategory-panel");
+
+      const inCategories = inDesktopCat || inMobileCat || inSubcategoryPanel;
+
+      const inDesktopDist = distanceRefDesktop.current?.contains(event.target);
+      const inMobileDist = distanceRefMobile.current?.contains(event.target);
+      const inDistance = inDesktopDist || inMobileDist;
+
+      if (!inCategories && !inDistance) {
+        setShowCategories(false);
+        setShowDistance(false);
+        setOpenNested(null);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Toggle nested subcategories
+  const toggleNestedDropdown = (index) => {
+    setOpenNested((prev) => (prev === index ? null : index));
+  };
+
+  // Handle category selection
+  const handleCategorySelect = (value) => {
+    setSelectedCategory(value);
+    setSelectedSubCategory({ ID: 0, Name: "" });
+    setShowCategories(false);
+    setOpenNested(null);
+  };
+  const handleSubCategorySelect = (value) => {
+    setSelectedSubCategory(value);
+    setOpenNested(null);
+    setShowCategories(false);
+  };
+
+  // CSS for accordion (inserted in component so no external file required)
+  const accordionStyles = `
+    /* accordion wrapper controls the expansion animation */
+    .accordion-wrapper {
+      max-height: 0;
+      overflow: hidden;
+      opacity: 0;
+      transition: max-height 0.35s cubic-bezier(.2,.9,.3,1), opacity 0.25s ease;
+    }
+    .accordion-wrapper.open {
+      max-height: 520px; /* allows the container to grow; inner .accordion-content can scroll */
+      opacity: 1;
+    }
+
+    /* the inner content area — will scroll if content taller than allowed height */
+    .accordion-content {
+      max-height: 420px; /* content visible area; adjust as needed */
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+      scroll-behavior: smooth;
+    }
+
+    /* optional small visual nicety for the scrollbar on webkit */
+    .accordion-content::-webkit-scrollbar {
+      width: 6px;
+    }
+    .accordion-content::-webkit-scrollbar-thumb {
+      background: rgba(0,0,0,0.08);
+      border-radius: 6px;
+    }
+
+    /* mobile tweak: slightly smaller limits and a little slower for a softer feel */
+    @media (max-width: 640px) {
+      .accordion-wrapper.open {
+        max-height: 420px;
+        transition: max-height 0.42s cubic-bezier(.2,.9,.3,1), opacity 0.32s ease;
+      }
+      .accordion-content {
+        max-height: 300px;
+      }
+    }
+  `;
+
+  return (
+    <div className="bg-white w-full overflow-visible">
+      {/* inject the accordion CSS into this component */}
+      <style>{accordionStyles}</style>
+
+      {/* DESKTOP VIEW */}
+      <div className="hidden sm:block">
+        <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">
+          {/* Page Title */}
+          <div className="mb-8">
+            <h2 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
+              SERVICE PROVIDERS{" "}
+              {selectedCategory.Name && (
+                <span className="font-normal">- {selectedCategory.Name}</span>
+              )}
+            </h2>
+          </div>
+
+          {/* Filters Section */}
+          <div className="text-[#4D4D4D] font-medium font-montserrat flex flex-wrap items-center gap-4 mb-8 text-[18px] leading-[22.5px]">
+            {/* Filters Icon + Label */}
+            <img src={FilterIcon} alt="Filters" className="w-5 h-5" />
+            <span>Filters</span>
+            <div></div>
+
+            {/* Categories Dropdown (DESKTOP) */}
+            <div
+              className="relative inline-block mr-4"
+              ref={categoriesRefDesktop}
+              style={{ width: "380px", flexShrink: 0 }}
+            >
+              <div
+                className="flex items-center gap-2 px-6 py-3 rounded-full border border-gray-300 bg-white relative cursor-pointer"
+                onClick={() => {
+                  setShowCategories((prev) => !prev);
+                  setShowDistance(false);
+                  setOpenNested(null);
+                }}
+              >
+                <img
+                  src={CategoriesIcon}
+                  alt="Categories"
+                  className="w-5 h-5"
+                />
+                <span className="text-[#4D4D4D] font-montserrat text-[16px] font-medium">
+                  {selectedSubCategory.Name !== ""
+                    ? selectedSubCategory.Name
+                    : selectedCategory.Name !== ""
+                    ? selectedCategory.Name
+                    : "Categories"}
+                </span>
+                {/* Arrow icon rotation based on dropdown state */}
+                <img
+                  src={ArrowIcon}
+                  alt="Arrow"
+                  className="w-[20px] h-[18px] absolute right-4 transition-transform duration-200"
+                  style={{
+                    top: "50%",
+                    transform: showCategories
+                      ? "translateY(-50%) rotate(270deg)"
+                      : "translateY(-50%) rotate(90deg)",
+                    filter:
+                      "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                  }}
+                />
+              </div>
+
+              {/* Categories Menu */}
+              {showCategories && (
+                <div
+                  className="absolute z-50 mt-2 bg-white rounded-lg shadow-lg border border-gray-200"
+                  style={{
+                    borderRadius: "12px",
+                    padding: "8px",
+                    width: "380px",
+                  }}
+                >
+                  {mergedCatFilter.map((category, index) => (
+                    <React.Fragment key={category.value}>
+                      {/* Main Category Item */}
+                      <div
+                        className={`flex items-center justify-between cursor-pointer px-4 py-3 rounded-md ${
+                          selectedCategory.ID === category.value
+                            ? "bg-black text-white"
+                            : "hover:bg-[#FEE5C5]"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (category.subcategories.length > 0) {
+                            toggleNestedDropdown(category.value);
+                          } else {
+                            handleCategorySelect({
+                              ID: category.value,
+                              Name: category.label,
+                            });
+                          }
+                        }}
+                      >
+                        <span
+                          className={`font-montserrat text-[16px] ${
+                            selectedCategory.ID === category.value
+                              ? "text-white"
+                              : "text-[#2D2D2D]"
+                          }`}
+                        >
+                          {category.label}
+                        </span>
+
+                        {/* Arrow for nested menu */}
+                        {category.subcategories.length > 0 && (
+                          <img
+                            src={ArrowIcon}
+                            alt="Arrow"
+                            className="w-[16px] h-[14px] transition-transform duration-200"
+                            style={{
+                              transform:
+                                openNested === category.value
+                                  ? "rotate(270deg)"
+                                  : "rotate(90deg)",
+                              filter:
+                                selectedCategory.ID === category.value
+                                  ? "brightness(0) invert(1)" // White for selected
+                                  : "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)", // Black for unselected
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      {/* Accordion-style subcategories (inside same dropdown box) */}
+                      <div
+                        className={`accordion-wrapper ${
+                          openNested === category.value ? "open" : ""
+                        } subcategory-panel`}
+                      >
+                        <div className="accordion-content">
+                          {category.subcategories.map((subCat) => (
+                            <div
+                              key={subCat.ID}
+                              className={`px-4 py-2 cursor-pointer rounded-md my-1 ${
+                                selectedSubCategory.ID === subCat.ID
+                                  ? "bg-gray-300 text-[#2D2D2D]"
+                                  : "hover:bg-[#FEE5C5]"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCategorySelect({
+                                  ID: category.value,
+                                  Name: category.label,
+                                });
+                                handleSubCategorySelect({
+                                  ID: subCat.ID,
+                                  Name: subCat.SubCatName,
+                                });
+                              }}
+                            >
+                              <span
+                                className={`font-montserrat text-[15px] ${
+                                  selectedSubCategory.ID === subCat.ID
+                                    ? "text-black"
+                                    : "text-[#2D2D2D]"
+                                }`}
+                              >
+                                {subCat.SubCatName}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {<div className="h-px bg-gray-200 my-1 mx-3"></div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Distance Dropdown (DESKTOP) */}
+            <div
+              className="relative md:mr-[30px]"
+              ref={distanceRefDesktop}
+              style={{ width: "200px", flexShrink: 0 }}
+            >
+              <div
+                className="flex items-center gap-2 px-6 py-3 rounded-full border border-gray-300 bg-white relative cursor-pointer"
+                onClick={() => {
+                  setShowDistance((prev) => !prev);
+                  setShowCategories(false);
+                  setOpenNested(null);
+                }}
+                style={{ width: "250px" }}
+              >
+                <img src={DistanceIcon} alt="Distance" className="w-10 h-5" />
+                <span className="text-[#4D4D4D] font-montserrat text-[16px] font-medium">
+                  {selectedDistance.text ?? "Distance"}
+                </span>
+                {/* Arrow rotation */}
+                <img
+                  src={ArrowIcon}
+                  alt="Arrow"
+                  className="w-[20px] h-[18px] absolute right-4 transition-transform duration-200"
+                  style={{
+                    top: "50%",
+                    transform: showDistance
+                      ? "translateY(-50%) rotate(270deg)"
+                      : "translateY(-50%) rotate(90deg)",
+                    filter:
+                      "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                  }}
+                />
+              </div>
+
+              {/* Distance Menu */}
+              {showDistance && (
+                <div
+                  className="absolute z-50 mt-2 bg-white rounded-md shadow-lg border border-gray-200"
+                  style={{
+                    borderRadius: "20px",
+                    padding: "8px",
+                    width: "250px",
+                  }}
+                >
+                  {distances.map((distance) => (
+                    <div
+                      key={distance.id}
+                      className={`cursor-pointer ${
+                        selectedDistance.min === distance.min
+                          ? "bg-black text-white"
+                          : "hover:bg-[#FEE5C5]"
+                      }`}
+                      style={{
+                        padding:
+                          selectedDistance.min === distance.min
+                            ? "9px 12px"
+                            : "12px 6px",
+                        borderRadius: "8px",
+                        margin:
+                          selectedDistance.min === distance.min
+                            ? "3px 0"
+                            : "3px 0",
+                      }}
+                      onClick={() => {
+                        setSelectedDistance(distance);
+                        setShowDistance(false);
+                      }}
+                    >
+                      <span
+                        className={`font-montserrat text-[16px] ${
+                          selectedDistance.min === distance.min
+                            ? "text-white"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        {distance.text}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* MOBILE VIEW */}
+      <div className="block sm:hidden px-4 pt-[120px] pb-4">
+        {/* Title */}
+        <div className="mb-6">
+          <h2 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
+            SERVICE PROVIDERS{" "}
+            {selectedCategory.Name && (
+              <span className="font-normal">- {selectedCategory.Name}</span>
+            )}{" "}
+          </h2>
+        </div>
+
+        {/* Filters label */}
+        <div className="flex items-center gap-2 mb-4">
+          <img src={FilterIcon} alt="Filters" className="w-5 h-5" />
+          <span className="text-[#949494] font-montserrat text-[16px] leading-[17.5px]">
+            Filters
+          </span>
+        </div>
+
+        {/* Categories & Distance side by side */}
+        <div className="flex flex-row items-center gap-3 mb-4">
+          {/* Categories (Mobile) */}
+          <div className="relative flex-1 min-w-0" ref={categoriesRefMobile}>
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-full border border-gray-300 bg-white relative cursor-pointer"
+              onClick={() => {
+                setShowCategories((prev) => !prev);
+                setShowDistance(false);
+                setOpenNested(null);
+              }}
+            >
+              <img src={CategoriesIcon} alt="Categories" className="w-5 h-5" />
+              <span className="text-[#606060] font-montserrat text-[14px] leading-[17.5px] font-medium truncate">
+                {selectedSubCategory.Name !== ""
+                  ? selectedSubCategory.Name
+                  : selectedCategory.Name !== ""
+                  ? selectedCategory.Name
+                  : "Categories"}
+              </span>
+              <img
+                src={ArrowIcon}
+                alt="Arrow"
+                className="w-[16px] h-[14px] absolute right-3 transition-transform duration-200"
+                style={{
+                  top: "50%",
+                  transform: showCategories
+                    ? "translateY(-50%) rotate(270deg)"
+                    : "translateY(-50%) rotate(90deg)",
+                  filter:
+                    "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                }}
+              />
+            </div>
+
+            {/* Categories Menu (Mobile) */}
+            {showCategories && (
+              <div className="absolute z-50 mt-2 w-full max-w-[90vw] bg-white rounded-lg shadow-lg border border-gray-200">
+                {mergedCatFilter.map((category) => (
+                  <React.Fragment key={category.value}>
+                    {/* Main Category */}
+                    <div
+                      className={`flex items-center justify-between cursor-pointer px-4 py-3 rounded-md ${
+                        selectedCategory.ID === category.value
+                          ? "bg-black text-white mx-2 mt-2"
+                          : "hover:bg-[#FEE5C5] mx-2 mt-2"
+                      }`}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        if (category.subcategories.length > 0) {
+                          toggleNestedDropdown(category.value);
+                        } else {
+                          handleCategorySelect({
+                            ID: category.value,
+                            Name: category.label,
+                          });
+                        }
+                      }}
+                    >
+                      <span
+                        className={`font-montserrat text-sm${
+                          selectedCategory.ID === category.value
+                            ? "text-white"
+                            : "text-[#606060]"
+                        }`}
+                      >
+                        {category.label}
+                      </span>
+                      {category.subcategories.length > 0 && (
+                        <img
+                          src={ArrowIcon}
+                          alt="Arrow"
+                          className="w-[14px] h-[12px] transition-transform duration-200"
+                          style={{
+                            transform:
+                              openNested === category.value
+                                ? "rotate(270deg)"
+                                : "rotate(90deg)",
+                            filter:
+                              selectedCategory.ID === category.value
+                                ? "brightness(0) invert(1)" // White for selected
+                                : "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)", // Black for unselected
+                          }}
+                        />
+                      )}
+                    </div>
+
+                    {/* Accordion-style subcategories in same box (mobile) */}
+                    <div
+                      className={`accordion-wrapper ${
+                        openNested === category.value ? "open" : ""
+                      } subcategory-panel`}
+                    >
+                      <div className="accordion-content">
+                        {openNested === category.value &&
+                          category.subcategories.map((subCat) => (
+                            <div
+                              key={subCat.ID}
+                              className={`px-4 py-2 cursor-pointer rounded-md my-1 ${
+                                selectedSubCategory.ID === subCat.ID
+                                  ? "bg-gray-300 text-black mx-2"
+                                  : "hover:bg-[#FEE5C5] mx-2"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCategorySelect({
+                                  ID: category.value,
+                                  Name: category.label,
+                                });
+                                handleSubCategorySelect({
+                                  ID: subCat.ID,
+                                  Name: subCat.SubCatName,
+                                });
+                              }}
+                            >
+                              <span
+                                className={`font-montserrat text-xs ${
+                                  selectedSubCategory.ID === subCat.ID
+                                    ? "text-black"
+                                    : "text-[#606060]"
+                                }`}
+                              >
+                                {subCat.SubCatName}
+                              </span>
+                            </div>
+                          ))}
+                      </div>
+                    </div>
+                    {<div className="h-px bg-gray-200 my-1 mx-3"></div>}
+                  </React.Fragment>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Distance (Mobile) */}
+          <div className="relative flex-1 min-w-0" ref={distanceRefMobile}>
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-full border border-gray-300 bg-white relative cursor-pointer"
+              onClick={() => {
+                setShowDistance((prev) => !prev);
+                setShowCategories(false);
+                setOpenNested(null);
+              }}
+            >
+              <img src={DistanceIcon} alt="Distance" className="w-5 h-5" />
+              <span className="text-[#606060] font-montserrat text-[14px] leading-[17.5px] font-medium truncate">
+                {selectedDistance.text ?? "Distance"}
+              </span>
+              <img
+                src={ArrowIcon}
+                alt="Arrow"
+                className="w-[16px] h-[14px] absolute right-3 transition-transform duration-200"
+                style={{
+                  top: "50%",
+                  transform: showDistance
+                    ? "translateY(-50%) rotate(270deg)"
+                    : "translateY(-50%) rotate(90deg)",
+                  filter:
+                    "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                }}
+              />
+            </div>
+
+            {/* Distance Menu (Mobile) */}
+            {showDistance && (
+              <div className="absolute z-50 mt-2 w-full max-w-[90vw] bg-white rounded-lg shadow-lg border border-gray-200 py-3 px-2">
+                {distances.map((distance) => (
+                  <div
+                    key={distance.id}
+                    className={`cursor-pointer mx-4 ${
+                      selectedDistance.min === distance.min
+                        ? "bg-black text-white"
+                        : "hover:bg-[#FEE5C5]"
+                    }`}
+                    style={{
+                      padding:
+                        selectedDistance.min === distance.min
+                          ? "9px 12px"
+                          : "12px 6px",
+                      borderRadius: "8px",
+                      margin:
+                        selectedDistance.min === distance.min
+                          ? "3px 0"
+                          : "3px 0",
+                    }}
+                    onClick={() => {
+                      setSelectedDistance(distance);
+                      setShowDistance(false);
+                    }}
+                  >
+                    <span
+                      className={`font-montserrat text-sm ${
+                        selectedDistance.min === distance.min
+                          ? "text-white"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      {distance.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+      {/* Divider */}
+      <div className="absolute left-0 right-0 h-px bg-gray-300"></div>
+      <div className="bg-white w-full">
+        <ServiceCardGrid
+          data={filteredData}
+          selectedCategory={selectedCategory}
+          selectedSubCategory={selectedSubCategory}
+        />
+      </div>
+      <div className="mb-20">
+        <PartnerSection />
+      </div>
+    </div>
+  );
+}
+
+export default ServiceListing;
