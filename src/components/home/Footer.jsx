@@ -31,7 +31,12 @@ const Footer = () => (
             >
               Help & Support
             </Link></p>
-          <p>Blog</p>
+           <p>
+            <Link to="http://blog.morselv.com/"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Blog
+            </Link></p>
         </div>
       </div>
 
@@ -118,7 +123,14 @@ const Footer = () => (
             Help & Support
             </Link>
           </p>
-          <p>Blog</p>
+          <p>
+            <Link
+              to="http://blog.morselv.com/"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Blog
+            </Link>
+          </p>
         </div>
       </div>
 
