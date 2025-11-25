@@ -214,7 +214,7 @@ const Header = () => {
     { name: "Home", url: "./" },
     { name: "Discover services", url: "./service" },
     { name: "Deals & offers", url: "./deals" },
-    { name: "Contact" },
+    // { name: "Contact" },
   ];
 
   const toggleNestedDropdown = (index) => {
@@ -429,9 +429,9 @@ const Header = () => {
               Deals & offers
             </Link>
           </span>
-          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300">
+          {/* <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300">
             Contact
-          </span>
+          </span> */}
         </nav>
 
         {/* Location */}
