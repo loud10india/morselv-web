@@ -66,12 +66,12 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   ></div>
                 </div>
                 <div className="px-5 py-0 flex flex-col flex-grow">
-                  <span className="font-medium text-xs sm:text-sm leading-[125%] text-gray-600">
+                  <span className="font-medium text[14px] sm:text-sm leading-[125%] text-[#4D4D4D]">
                     {provider.subCatName}
                   </span>
-                  <h2 className="text-[14px] font-bold text-black mt-1 overflow-hidden whitespcae-nowrap">
+                  <span className="text-[20.533px] font-semibold truncate text-[#2D2D2D] mt-1 overflow-hidden whitespcae-nowrap">
                     {provider.providerName}
-                  </h2>
+                  </span>
                   <div className="flex items-center gap-[8.556px] mt-1 mb-4">
                     <svg
                       xmlns="http://www.w3.org/2000/svg"
@@ -89,7 +89,7 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                         fill="#5D5D5D"
                       />
                     </svg>
-                    <span className="text-[#4A4A4A] font-montserrat text-[11px] sm:text-xs leading-snug truncate">
+                    <span className="text-[#4D4D4D] font-montserrat text-[13.689px] sm:text-xs leading-snug truncate">
                       {provider.area}
                       {provider.city ? ", " + provider.city : ""}
                     </span>
@@ -140,10 +140,10 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   ></div>
                 </div>
                 <div className="px-3 py-2 flex flex-col flex-grow">
-                  <span className="font-medium text-xs sm:text-sm leading-[125%] text-gray-600">
+                  <span className="font-medium text-[14px] sm:text-sm leading-[125%] text-[#4D4D4D]">
                     {provider.subCatName}
                   </span>
-                  <h2 className="text-[14px] font-bold text-black mt-1 overflow-hidden whitespace-nowrap">
+                  <h2 className="text-[14px] font-semibold text-[#2D2D2D] mt-1 overflow-hidden whitespace-nowrap truncate">
                     {provider.providerName}
                   </h2>
                   <div className="flex items-center gap-2 mt-1">
@@ -163,7 +163,7 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                         fill="#5D5D5D"
                       />
                     </svg>
-                    <span className="text-[#4A4A4A] font-montserrat text-xs font-normal leading-tight truncate">
+                    <span className="text-[#4D4D4D] font-montserrat text-xs font-normal leading-tight truncate">
                       {provider.area}
                       {provider.city ? ", " + provider.city : ""}
                     </span>
@@ -220,10 +220,10 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
               </div>
 
               <div className="p-2 space-y-1">
-                <span className="font-medium text-xs sm:text-sm leading-[125%] text-gray-600">
+                <span className="font-medium text-[10px] sm:text-[10px] leading-[125%] text-[#4D4D4D]">
                   {provider.subCatName}
                 </span>
-                <h2 className="text-[14px] font-bold text-black mt-1 overflow-hidden whitespace-nowrap">
+                <h2 className="text-[12px] font-semibold text-[#2D2D2D] mt-1 overflow-hidden whitespace-nowrap truncate">
                   {provider.providerName}
                 </h2>
                 <div className="flex items-center gap-1">
@@ -243,7 +243,7 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                       fill="#5D5D5D"
                     />
                   </svg>
-                  <span className="text-[#4A4A4A] font-montserrat text-[11px] sm:text-xs leading-snug truncate">
+                  <span className="text-[#4D4D4D] font-montserrat text-[10px] sm:text-[10px] font-normal leading-snug truncate">
                     {provider.area}
                     {provider.city ? ", " + provider.city : ""}
                   </span>
