@@ -46,18 +46,72 @@ function DealSlider() {
   const [openNested, setOpenNested] = useState(null);
   const [mergedCatFilter, setMergedCatFilter] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  const [showFloatingFilters, setShowFloatingFilters] = useState(false);
+
+// new state variables for floating filters
+const [showFloatingCategories, setShowFloatingCategories] = useState(false);
+const [showFloatingDistance, setShowFloatingDistance] = useState(false);
+const [openNestedFloating, setOpenNestedFloating] = useState(null);
+
+// Updated the click outside handler to include floating filters also
+useEffect(() => {
+  const handleClickOutside = (event) => {
+    const inDesktopCat = categoriesRefDesktop.current?.contains(event.target);
+    const inMobileCat = categoriesRefMobile.current?.contains(event.target);
+    const inFloatingCat = floatingCategoriesRef.current?.contains(event.target);
+    const inSubcategoryPanel = !!event.target.closest(".subcategory-panel");
+
+    const inCategories = inDesktopCat || inMobileCat || inFloatingCat || inSubcategoryPanel;
+
+    const inDesktopDist = distanceRefDesktop.current?.contains(event.target);
+    const inMobileDist = distanceRefMobile.current?.contains(event.target);
+    const inFloatingDist = floatingDistanceRef.current?.contains(event.target);
+    const inDistance = inDesktopDist || inMobileDist || inFloatingDist;
+
+    if (!inCategories && !inDistance) {
+      setShowCategories(false);
+      setShowDistance(false);
+      setShowFloatingCategories(false);
+      setShowFloatingDistance(false);
+      setOpenNested(null);
+      setOpenNestedFloating(null);
+    }
+  };
+
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
+// function for floating nested dropdowns
+const toggleNestedDropdownFloating = (index) => {
+  setOpenNestedFloating((prev) => (prev === index ? null : index));
+};
 
   // Separate refs for DESKTOP and MOBILE to avoid collisions
   const categoriesRefDesktop = useRef(null);
   const categoriesRefMobile = useRef(null);
   const distanceRefDesktop = useRef(null);
   const distanceRefMobile = useRef(null);
+  const floatingCategoriesRef = useRef(null);
+  const floatingDistanceRef = useRef(null);
 
   const toSlug = (str) =>
     str
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+
+  // Scroll handler for floating filters
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollY = window.scrollY;
+      // Show floating filters when scrolled down 300px
+      setShowFloatingFilters(scrollY > 300);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, []);
 
   //Restore filters from sessionStorage
   {/* useEffect(() => {
@@ -222,14 +276,15 @@ function DealSlider() {
     const handleClickOutside = (event) => {
       const inDesktopCat = categoriesRefDesktop.current?.contains(event.target);
       const inMobileCat = categoriesRefMobile.current?.contains(event.target);
-      // We Keep this to detect clicks inside expanded subcategory area
+      const inFloatingCat = floatingCategoriesRef.current?.contains(event.target);
       const inSubcategoryPanel = !!event.target.closest(".subcategory-panel");
 
-      const inCategories = inDesktopCat || inMobileCat || inSubcategoryPanel;
+      const inCategories = inDesktopCat || inMobileCat || inFloatingCat || inSubcategoryPanel;
 
       const inDesktopDist = distanceRefDesktop.current?.contains(event.target);
       const inMobileDist = distanceRefMobile.current?.contains(event.target);
-      const inDistance = inDesktopDist || inMobileDist;
+      const inFloatingDist = floatingDistanceRef.current?.contains(event.target);
+      const inDistance = inDesktopDist || inMobileDist || inFloatingDist;
 
       if (!inCategories && !inDistance) {
         setShowCategories(false);
@@ -301,13 +356,292 @@ function DealSlider() {
         max-height: 300px;
       }
     }
-  `;
+
+  .glass-container {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
+    border-radius: 20px;
+    padding: 16px 24px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1) !important;
+  }
+
+  /* Floating Filters */
+  .floating-filters {
+    position: fixed;
+    top: 100px;
+    left: 50%;
+    transform: translateX(-50%) translateY(-20px);
+    z-index: 1000;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .floating-filters.hidden {
+    opacity: 0;
+    transform: translateX(-50%) translateY(-20px);
+    pointer-events: none;
+  }
+
+  .floating-filters.visible {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+    pointer-events: all;
+  }
+
+  .glass-btn {
+    background: rgba(255, 255, 255, 0.95) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+    color: #2D2D2D !important;
+  }
+
+  .glass-btn:hover {
+    background: rgba(255, 255, 255, 1) !important;
+    border: 1px solid rgba(0, 0, 0, 0.2) !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.12) !important;
+    transform: translateY(-1px);
+  }
+
+  .glass-dropdown {
+    background: rgba(255, 255, 255, 0.98) !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    border: 1px solid rgba(0, 0, 0, 0.15) !important;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12) !important;
+    color: #2D2D2D !important;
+  }
+
+  /* Mobile responsive */
+  @media (max-width: 768px) {
+    .floating-filters {
+      top: 85px;
+    }
+    
+    .glass-container {
+      padding: 12px 18px;
+      border-radius: 16px;
+    }
+    
+    .glass-btn {
+      width: 160px !important;
+      padding: 10px 12px;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .floating-filters {
+      top: 75px;
+    }
+    
+    .glass-container {
+      padding: 10px 14px;
+      border-radius: 14px;
+    }
+    
+    .glass-btn {
+      width: 140px !important;
+      padding: 8px 10px;
+    }
+    
+    .glass-btn span {
+      font-size: 13px !important;
+    }
+  }
+`;  
+
+  // Floating Filters Component with separate state also
+  const FloatingFilters = () => (
+    <div className={`floating-filters ${showFloatingFilters ? 'visible' : 'hidden'}`}>
+      <div className="glass-container">
+        <div className="flex items-center justify-center gap-4">
+          {/* Categories Dropdown */}
+          <div className="relative" ref={floatingCategoriesRef}>
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-full cursor-pointer glass-btn sm:w-[160px] xl:w-[200px] lg:w-[200px] md:w-[170px] w-[140px]"
+              style={{ minHeight: "48px" }}
+              onClick={() => {
+                setShowFloatingCategories((prev) => !prev);
+                setShowFloatingDistance(false); 
+                setOpenNestedFloating(null);
+              }}
+            >
+              <img src={CategoriesIcon} alt="Categories" className="w-5 h-5" />
+              <span className="text-[15px] font-montserrat font-normal truncate flex-1 text-gray-800">
+                {selectedSubCategory.Name !== ""
+                  ? selectedSubCategory.Name
+                  : selectedCategory.Name !== ""
+                  ? selectedCategory.Name
+                  : "Categories"}
+              </span>
+              <img
+                src={ArrowIcon}
+                alt="Arrow"
+                className="w-[16px] h-[14px] transition-transform duration-300"
+                style={{
+                  transform: showFloatingCategories ? "rotate(270deg)" : "rotate(90deg)",
+                  filter: "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                }}
+              />
+            </div>
+
+            {/* Categories Menu */}
+            {showFloatingCategories && (
+              <div
+                className="absolute z-50 mt-2 glass-dropdown rounded-xl sm:w-[160px] xl:w-[200px] lg:w-[200px] md:w-[170px] w-[140px]"
+                style={{
+                  padding: "12px",
+                  maxHeight: "400px",
+                }}
+              >
+                <div className="accordion-content" style={{ maxHeight: "350px" }}>
+                  {mergedCatFilter.map((category, index) => (
+                    <React.Fragment key={category.value}>
+                      <div
+                        className={`flex items-center justify-between cursor-pointer px-3 py-3 rounded-lg mb-1 ${
+                          selectedCategory.ID === category.value
+                            ? "bg-black text-white"
+                            : "hover:bg-[#FEE5C5]"
+                        }`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (category.subcategories.length > 0) {
+                            toggleNestedDropdownFloating(category.value);
+                          } else {
+                            handleCategorySelect({
+                              ID: category.value,
+                              Name: category.label,
+                            });
+                            setShowFloatingCategories(false);
+                          }
+                        }}
+                      >
+                        <span className="font-montserrat text-[14px]">
+                          {category.label}
+                        </span>
+                        {category.subcategories.length > 0 && (
+                          <img
+                            src={ArrowIcon}
+                            alt="Arrow"
+                            className="w-[14px] h-[12px] transition-transform duration-300"
+                            style={{
+                              transform: openNestedFloating === category.value ? "rotate(270deg)" : "rotate(90deg)",
+                              filter: selectedCategory.ID === category.value 
+                                ? "brightness(0) invert(1)"
+                                : "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                            }}
+                          />
+                        )}
+                      </div>
+
+                      <div className={`accordion-wrapper ${openNestedFloating === category.value ? 'open' : ''} subcategory-panel`}>
+                        <div className="accordion-content pl-2">
+                          {category.subcategories.map((subCat) => (
+                            <div
+                              key={subCat.ID}
+                              className={`px-3 py-2 cursor-pointer rounded-lg my-1 ${
+                                selectedSubCategory.ID === subCat.ID
+                                  ? "bg-gray-300 text-black"
+                                  : "hover:bg-[#FEE5C5]"
+                              }`}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleCategorySelect({
+                                  ID: category.value,
+                                  Name: category.label,
+                                });
+                                handleSubCategorySelect({
+                                  ID: subCat.ID,
+                                  Name: subCat.SubCatName,
+                                });
+                                setShowFloatingCategories(false);
+                              }}
+                            >
+                              <span className="font-montserrat text-[13px]">
+                                {subCat.SubCatName}
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                      {<div className="h-px bg-gray-200 my-1 mx-3"></div>}
+                    </React.Fragment>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Distance Dropdown */}
+          <div className="relative" ref={floatingDistanceRef}>
+            <div
+              className="flex items-center gap-2 px-4 py-3 rounded-full cursor-pointer glass-btn"
+              style={{ width: "180px", minHeight: "48px" }}
+              onClick={() => {
+                setShowFloatingDistance((prev) => !prev);
+                setShowFloatingCategories(false); 
+                setOpenNestedFloating(null);
+              }}
+            >
+              <img src={DistanceIcon} alt="Distance" className="w-5 h-5" />
+              <span className="text-[15px] font-montserrat font-normal truncate flex-1 text-gray-800">
+                {selectedDistance.text ?? "Distance"}
+              </span>
+              <img
+                src={ArrowIcon}
+                alt="Arrow"
+                className="w-[16px] h-[14px] transition-transform duration-300"
+                style={{
+                  transform: showFloatingDistance ? "rotate(270deg)" : "rotate(90deg)",
+                  filter: "invert(0%) sepia(0%) saturate(0%) hue-rotate(0deg) brightness(0) contrast(100%)",
+                }}
+              />
+            </div>
+
+            {/* Distance Menu */}
+            {showFloatingDistance && (
+              <div
+                className="absolute z-50 mt-2 glass-dropdown rounded-xl sm:w-[160px] xl:w-[180px] lg:w-[180px] md:w-[180px]"
+                style={{
+                  padding: "12px"
+                }}
+              >
+                {distances.map((distance) => (
+                  <div
+                    key={distance.id}
+                    className={`cursor-pointer px-3 py-3 rounded-lg my-1 ${
+                      selectedDistance.min === distance.min
+                        ? "bg-black text-white"
+                        : "hover:bg-[#FEE5C5]"
+                    }`}
+                    onClick={() => {
+                      setSelectedDistance(distance);
+                      setShowFloatingDistance(false);
+                    }}
+                  >
+                    <span className="font-montserrat text-[14px]">
+                      {distance.text}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 
   return (
     <div className="bg-white w-full overflow-visible">
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
 
+      {/* Beautiful Floating Filters */}
+      <FloatingFilters />
       {/* DESKTOP VIEW */}
       <div className="hidden sm:block">
         <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">

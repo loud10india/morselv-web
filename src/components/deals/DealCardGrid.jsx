@@ -66,15 +66,15 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   ></div>
                 </div>
                 <div className="px-5 py-0 flex flex-col flex-grow">
-                  <span className="font-medium text-xs sm:text-sm leading-[125%] text-gray-600">
+                  <span className="font-normal text-[#4D4D4d] text-[14px] sm:text-[14px] leading-[125%]">
                     {deal.subCatName}
                   </span>
-                  <h2 className="text-base sm:text-base font-bold text-black mt-1">
+                  <span className="text-[20px] sm:text-[20px] font-semibold truncate text-[#2D2D2D]">
                     {deal.dealName}
-                  </h2>
-                  <h3 className="text-sm sm:text-base font-semibold text-gray-800">
+                  </span>
+                  <span className="text-sm sm:text-base font-normal text-[#2D2D2D]">
                     {deal.providerName}
-                  </h3>
+                  </span>
 
                   <div className="flex items-center gap-[8.556px] mt-1 mb-4">
                     <svg
@@ -93,7 +93,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                         fill="#5D5D5D"
                       />
                     </svg>
-                    <span className="text-[#4A4A4A] font-montserrat text-[11px] sm:text-xs leading-snug truncate">
+                    <span className="text-[#4D4D4D] font-normal font-montserrat text-[14px] sm:text-xs leading-snug truncate">
                       {deal.area}
                       {deal.city ? ", " + deal.city : ""}
                     </span>
@@ -147,7 +147,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   <p className="text-[#414141] font-montserrat text-sm font-medium leading-tight truncate">
                     {deal.subCatName}
                   </p>
-                  <p className="text-[#210303] font-montserrat text-lg font-bold leading-tight truncate mt-1">
+                  <p className="text-[#2D2D2D] font-montserrat text-lg font-semibold leading-tight truncate mt-1">
                     {deal.dealName}
                   </p>
                   <h3 className="text-sm sm:text-base font-semibold text-gray-800">
@@ -230,7 +230,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                 <p className="text-[#414141] font-montserrat text-[11px] sm:text-xs font-medium leading-tight truncate">
                   {deal.subCatName}
                 </p>
-                <p className="text-[#210303] font-montserrat text-sm sm:text-[15px] font-bold leading-tight truncate">
+                <p className="text-[#2D2D2D] font-montserrat text-sm sm:text-[15px] font-semibold leading-tight truncate">
                   {deal.dealName}
                 </p>
                 <h3 className="text-sm sm:text-base font-semibold text-gray-800">

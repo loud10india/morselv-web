@@ -6,7 +6,7 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
   const [formData, setFormData] = useState({
     fullName: "",
     email: "",
-    stdCode: "+91", // default STD code
+    stdCode: "+91",
     phoneNumber: "",
   });
 
@@ -16,6 +16,8 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
     phoneNumber: "",
   });
 
+  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const popupRef = useRef(null);
 
   const handleChange = (e) => {
@@ -33,13 +35,11 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
     let isValid = true;
     const newErrors = { fullName: "", email: "", phoneNumber: "" };
 
-    // Full Name
     if (!formData.fullName.trim()) {
       newErrors.fullName = "Full name is required";
       isValid = false;
     }
 
-    // Email validation
     if (!formData.email.trim()) {
       newErrors.email = "Email is required";
       isValid = false;
@@ -49,7 +49,6 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
         newErrors.email = "Email is invalid";
         isValid = false;
       } else {
-        // ✅ Allowed domains
         const allowedDomains = [
           "gmail.com",
           "yahoo.com",
@@ -58,23 +57,19 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
         ];
         const emailDomain = formData.email.split("@")[1];
         if (!allowedDomains.includes(emailDomain)) {
-          newErrors.email = `Email domain must be one of: ${allowedDomains.join(
-            ", "
-          )}`;
+          newErrors.email = `Email domain must be one of: ${allowedDomains.join(", ")}`;
           isValid = false;
         }
       }
     }
 
-    // Phone Number validation (10 digits)
     if (!formData.phoneNumber.trim()) {
       newErrors.phoneNumber = "Phone number is required";
       isValid = false;
     } else {
-      const phoneRegex = /^\d{10}$/; // exactly 10 digits
+      const phoneRegex = /^\d{10}$/;
       if (!phoneRegex.test(formData.phoneNumber)) {
-        newErrors.phoneNumber =
-          "Phone number must be 10 digits long and numeric.";
+        newErrors.phoneNumber = "Phone number must be 10 digits long and numeric.";
         isValid = false;
       }
     }
@@ -83,9 +78,13 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
     return isValid;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
+    if (!validateForm()) return;
+
+    setIsLoading(true);
+
+    try {
       const param = {
         fullName: formData.fullName,
         email: formData.email,
@@ -95,14 +94,23 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
         providerID: parseInt(providerID),
       };
 
-      leads.addBookings(param).then((res) => {
-        if (res.success) {
-          toast.success("✅ Details submitted successfully!");
+      const res = await leads.addBookings(param);
+
+      if (res.success) {
+        toast.success("✅ Details submitted successfully!");
+        setIsSubmitted(true);
+
+        // Wait 3 seconds before closing to show thank you message
+        setTimeout(() => {
           onClose();
-        } else {
-          toast.error("❌ Something went wrong! Please try again.");
-        }
-      });
+        }, 3000);
+      } else {
+        toast.error("❌ Something went wrong! Please try again.");
+      }
+    } catch (error) {
+      toast.error("❌ Failed to submit. Please try again.");
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -130,6 +138,8 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
     if (isOpen) {
       setFormData({ fullName: "", email: "", stdCode: "+91", phoneNumber: "" });
       setErrors({ fullName: "", email: "", phoneNumber: "" });
+      setIsSubmitted(false);
+      setIsLoading(false);
     }
   }, [isOpen]);
 
@@ -151,85 +161,128 @@ const DealPopup = ({ isOpen, onClose, dealID, serviceID, providerID }) => {
           &times;
         </button>
 
-        <h2 className="text-[#4A4A4A] font-montserrat text-[24px] md:text-[28px] font-semibold mt-[31px] text-center">
-          Get this Deal
-        </h2>
-        <p className="text-[#5B5B5B] font-inter text-[12px] md:text-[14px] font-normal leading-[22px] text-center">
-          Grab our limited-time offer and treat yourself.
-        </p>
+        {!isSubmitted ? (
+          <>
+            <h2 className="text-[#4A4A4A] font-montserrat text-[24px] md:text-[28px] font-semibold mt-[31px] text-center">
+              Get this Deal
+            </h2>
+            <p className="text-[#5B5B5B] font-inter text-[12px] md:text-[14px] font-normal leading-[22px] text-center">
+              Grab our limited-time offer and treat yourself.
+            </p>
 
-        <form
-          onSubmit={handleSubmit}
-          className="w-full flex flex-col items-center gap-[11px]"
-        >
-          {/* Full Name */}
-          <div className="w-full mt-[43px]">
-            <input
-              type="text"
-              name="fullName"
-              value={formData.fullName}
-              onChange={handleChange}
-              placeholder="Full Name"
-              className={`w-full p-[15px] px-[20px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${
-                errors.fullName ? "border-red-500" : "border-[#6D6D6D]"
-              }`}
-            />
-            {errors.fullName && (
-              <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
-            )}
+            <form
+              onSubmit={handleSubmit}
+              className="w-full flex flex-col items-center gap-[11px]"
+            >
+              {/* Full Name */}
+              <div className="w-full mt-[43px]">
+                <input
+                  type="text"
+                  name="fullName"
+                  value={formData.fullName}
+                  onChange={handleChange}
+                  placeholder="Full Name"
+                  disabled={isLoading}
+                  className={`w-full p-[15px] px-[20px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${errors.fullName ? "border-red-500" : "border-[#6D6D6D]"
+                    } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                />
+                {errors.fullName && (
+                  <p className="text-red-500 text-sm mt-1">{errors.fullName}</p>
+                )}
+              </div>
+
+              {/* Email */}
+              <div className="w-full">
+                <input
+                  type="email"
+                  name="email"
+                  value={formData.email}
+                  onChange={handleChange}
+                  placeholder="Email"
+                  disabled={isLoading}
+                  className={`w-full p-[15px] mt-[11px] px-[20px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${errors.email ? "border-red-500" : "border-[#6D6D6D]"
+                    } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                />
+                {errors.email && (
+                  <p className="text-red-500 text-sm mt-1">{errors.email}</p>
+                )}
+              </div>
+
+              {/* Phone Number with STD code */}
+              <div className="w-full mt-[11px] flex gap-2">
+                <input
+                  type="text"
+                  name="stdCode"
+                  value={formData.stdCode}
+                  readOnly
+                  className="w-[70px] p-[15px] rounded-[10px] border bg-gray-100 text-gray-600 font-inter text-[16px] font-medium text-center focus:outline-none"
+                />
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  placeholder="Phone Number"
+                  disabled={isLoading}
+                  className={`flex-1 p-[15px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${errors.phoneNumber ? "border-red-500" : "border-[#6D6D6D]"
+                    } ${isLoading ? "opacity-50 cursor-not-allowed" : ""}`}
+                />
+              </div>
+              {errors.phoneNumber && (
+                <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
+              )}
+
+              <button
+                type="submit"
+                disabled={isLoading}
+                className={`flex h-[60px] justify-center items-center rounded-[10px] px-[44px] py-[16px] text-[#FFF] font-montserrat text-[20px] font-medium leading-[22px] transition-colors mt-[43px] mb-[31px] ${isLoading
+                  ? "bg-gray-400 cursor-not-allowed"
+                  : "bg-[#121212] hover:bg-black"
+                  }`}
+              >
+                {isLoading ? "Submitting..." : "Submit"}
+              </button>
+            </form>
+          </>
+        ) : (
+          // Thank You Message - THIS WILL DEFINITELY SHOW
+          <div className="flex flex-col items-center justify-center py-8 w-full">
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-6">
+              <svg
+                className="w-8 h-8 text-green-600"
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M5 13l4 4L19 7"
+                ></path>
+              </svg>
+            </div>
+
+            <h2 className="text-[#4A4A4A] font-montserrat text-[24px] md:text-[28px] font-semibold text-center mb-4">
+              Thank You!
+            </h2>
+
+            <p className="text-[#5B5B5B] font-inter text-[14px] md:text-[16px] font-normal leading-[22px] text-center max-w-md mb-2">
+              Thank you for your interest! Our team will contact you shortly to help you get this amazing deal.
+            </p>
+
+            <p className="text-green-600 font-inter text-[12px] text-center font-medium">
+              ✓ Successfully submitted
+            </p>
+
+            {/* <div className="mt-6 px-4 py-2 bg-blue-50 border border-blue-200 rounded-lg">
+              <p className="text-[#1E40AF] font-inter text-[12px] text-center">
+                Closing in 3 seconds...
+              </p>
+            </div> */}
           </div>
-
-          {/* Email */}
-          <div className="w-full">
-            <input
-              type="email"
-              name="email"
-              value={formData.email}
-              onChange={handleChange}
-              placeholder="Email"
-              className={`w-full p-[15px] mt-[11px] px-[20px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${
-                errors.email ? "border-red-500" : "border-[#6D6D6D]"
-              }`}
-            />
-            {errors.email && (
-              <p className="text-red-500 text-sm mt-1">{errors.email}</p>
-            )}
-          </div>
-
-          {/* Phone Number with STD code */}
-          <div className="w-full mt-[11px] flex gap-2">
-            {/* STD Code */}
-            <input
-              type="text"
-              name="stdCode"
-              value={formData.stdCode}
-              readOnly
-              className="w-[70px] p-[15px] rounded-[10px] border bg-gray-100 text-gray-600 font-inter text-[16px] font-medium text-center focus:outline-none"
-            />
-
-            {/* Phone Number */}
-            <input
-              type="tel"
-              name="phoneNumber"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              placeholder="Phone Number"
-              className={`flex-1 p-[15px] rounded-[10px] border bg-white text-[#6D6D6D] font-inter text-[16px] font-medium placeholder-[#6D6D6D] focus:outline-none focus:ring-1 focus:ring-black ${
-                errors.phoneNumber ? "border-red-500" : "border-[#6D6D6D]"
-              }`}
-            />
-          </div>
-          {errors.phoneNumber && (
-            <p className="text-red-500 text-sm mt-1">{errors.phoneNumber}</p>
-          )}
-
-          <button
-            type="submit"
-            className="flex h-[60px] justify-center items-center rounded-[10px] bg-[#121212] px-[44px] py-[16px] text-[#FFF] font-montserrat text-[20px] font-medium leading-[22px] hover:bg-black transition-colors mt-[43px] mb-[31px]"
-          >
-            Submit
-          </button>
-        </form>
+        )}
       </div>
     </div>
   );
