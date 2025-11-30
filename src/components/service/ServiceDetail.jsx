@@ -68,16 +68,16 @@ const ServiceDetail = () => {
                   <div key={service.ID}>
                     <div className="flex justify-between items-start mb-4">
                       <div className="max-w-4xl">
-                        <h3 className="text-[#2D2D2D] font-montserrat text-[24px] font-bold uppercase">
+                        <h3 className="text-[#2D2D2D] font-montserrat text-[24px] font-semibold uppercase">
                           {service.Name}
                         </h3>
-                        <p className="text-[#4D4D4D] font-montserrat text-[16px] font-400 mt-[14px]">
+                        <p className="text-[#4D4D4D] font-montserrat font-normal text-[16px] font-400 mt-[14px]">
                           {service.Description}
                         </p>
                       </div>
                       <button
                         onClick={(e) => openPopup(service.ID)}
-                        className="bg-white text-[#000] rounded-lg font-montserrat text-[16px] font-semibold px-8 py-4 mt-4"
+                        className="bg-white text-[#000] rounded-lg font-montserrat text-[16px] xl:text-[18px] font-semibold px-8 py-4 mt-4"
                       >
                         BOOK NOW
                       </button>
@@ -108,10 +108,10 @@ const ServiceDetail = () => {
                   <div key={service.ID}>
                     <div className="flex justify-between items-start mb-4">
                       <div className="max-w-3xl">
-                        <h3 className="text-[#2D2D2D] font-montserrat text-[20px] font-bold uppercase">
+                        <h3 className="text-[#2D2D2D] font-montserrat text-[20px] font-semibold uppercase">
                           {service.Name}
                         </h3>
-                        <p className="text-[#4D4D4D] font-400 font-montserrat text-[14px] mt-[13px]">
+                        <p className="text-[#4D4D4D] font-400 font-normal font-montserrat text-[14px] mt-[13px]">
                           {service.Description}
                         </p>
                       </div>
@@ -134,7 +134,7 @@ const ServiceDetail = () => {
 
         {/* Tablet Version (md) */}
         <div className="hidden md:block lg:hidden w-full mt-[12px] px-8">
-          <h2 className="text-[#2D2D2D] font-inter font-bold text-[24px] mb-6">
+          <h2 className="text-[#2D2D2D] font-inter font-semibold text-[24px] mb-6">
             Main Offerings
           </h2>
 
@@ -144,10 +144,10 @@ const ServiceDetail = () => {
                 service.Name != "" && (
                   <div key={service.ID}>
                     <div className="flex flex-col gap-3">
-                      <h3 className="text-[#2D2D2D] font-montserrat text-[18px] font-bold uppercase">
+                      <h3 className="text-[#2D2D2D] font-montserrat text-[18px] font-semibold uppercase">
                         {service.Name}
                       </h3>
-                      <p className="text-[#4D4D4D] font-400 font-montserrat text-[14px] mt-[12px]">
+                      <p className="text-[#4D4D4D] font-400 font-normal font-montserrat text-[14px] mt-[12px]">
                         {service.Description}
                       </p>
                       <button
@@ -169,7 +169,7 @@ const ServiceDetail = () => {
 
         {/* Mobile Version */}
         <div className="block md:hidden w-full px-2">
-          <h2 className="text-black font-inter font-bold text-[20px] mb-4">
+          <h2 className="text-[#2D2D2D] font-inter font-semibold text-[20px] mb-4">
             Main Offerings
           </h2>
           <div className="bg-[#F3D0A1] rounded-lg p-4 space-y-4 w-full h-auto">
@@ -177,15 +177,15 @@ const ServiceDetail = () => {
               (service, idx) =>
                 service.Name != "" && (
                   <div key={service.ID} className="flex flex-col gap-2">
-                    <h3 className="text-[#2D2D2D] mx-2 font-montserrat text-[16px] font-bold uppercase mt-[29px]">
+                    <h3 className="text-[#2D2D2D] mx-2 font-montserrat text-[16px] font-semibold mt-[29px]">
                       {service.Name}
                     </h3>
-                    <p className="text-[#4D4D4D] font-400 mx-2 font-montserrat text-[12px] mt-2">
+                    <p className="text-[#2D2D2D] font-400 mx-2 font-montserrat text-[12px] mt-2">
                       {service.Description}
                     </p>
                     <button
                       onClick={(e) => openPopup(service.ID)}
-                      className="bg-white text-[#000] rounded-md text-[14px] font-semibold px-12 py-2 mt-2 w-max hover:bg-gray-100 transition mb-[29px]"
+                      className="bg-white text-[#000] rounded-[10px] text-[14px] font-semibold px-[30px] py-2 mt-2 w-max hover:bg-gray-100 transition mb-[29px]"
                     >
                       BOOK NOW
                     </button>
