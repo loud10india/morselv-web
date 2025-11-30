@@ -40,14 +40,15 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
       {/* Desktop Version */}
       <div className="hidden lg:block">
         <div className="max-w-7xl mx-auto md:px-4 xl:px-0 lg:px-4">
+          {!displayedData.length && <div>We didn’t find anything that matched your search. Try resetting your filters.</div>}
           <div className="grid grid-cols-4 gap-4 xl:gap-5 justify-items-center">
             {displayedData.map((deal) => (
               <div
                 key={deal.id}
                 onClick={() => handleCardClick(deal)}
                 className="flex flex-col bg-white shadow-[0_3.422px_15.999px_rgba(0,0,0,0.10)] transform transition duration-300 hover:scale-[1.03] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
-                style={{ 
-                  borderRadius: "17.111px", 
+                style={{
+                  borderRadius: "17.111px",
                   width: "100%",
                   maxWidth: "305px",
                   minWidth: "250px"
@@ -110,7 +111,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </div> */}
           {hasMore && (
             <div className="mt-[35.5px] flex justify-center">
-              <button 
+              <button
                 onClick={loadMore}
                 className="inline-flex h-[60px] px-[44px] py-[20px] justify-center items-center gap-[10px] rounded-[10px] bg-[#121212] text-white font-montserrat text-[20px] font-medium leading-[110%] hover:bg-[#333] transition-colors"
               >
@@ -187,7 +188,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </div> */}
           {hasMore && (
             <div className="mt-8 flex justify-center">
-              <button 
+              <button
                 onClick={loadMore}
                 className="px-8 py-3 rounded-lg bg-[#121212] text-white font-montserrat text-base font-medium hover:bg-[#333] transition-colors"
               >
@@ -270,7 +271,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
         </div> */}
         {hasMore && (
           <div className="mt-8 flex justify-center">
-            <button 
+            <button
               onClick={loadMore}
               className="px-8 py-3 rounded-lg bg-[#121212] text-white font-montserrat text-sm font-medium hover:bg-[#333] transition-colors"
             >
