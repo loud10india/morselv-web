@@ -14,24 +14,24 @@ const Footer = () => (
         <h3 className="text-[#E5E5E5] font-semibold text-[18px] mb-6 whitespace-nowrap">About Morselv</h3>
         <div className="text-[#E0E0E0] font-normal text-[14px] space-y-3">
           <p>
-            <Link to="/AboutUs" 
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer"}} 
+            <Link to="/AboutUs"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
               About Us
             </Link></p>
           <p>
-            <Link to="/Careers" 
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer"}} 
+            <Link to="/Careers"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
               Careers
             </Link></p>
           <p>
-            <Link to="/HelpAndSupport" 
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer"}} 
+            <Link to="/HelpAndSupport"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
               Help & Support
             </Link></p>
-           <p>
+          <p>
             <Link to="http://blog.morselv.com/"
               style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
@@ -62,14 +62,14 @@ const Footer = () => (
         <h3 className="text-[#E5E5E5] font-semibold text-[18px] mb-6">Legal</h3>
         <div className="text-[#E0E0E0] font-normal text-[14px] space-y-3 whitespace-nowrap">
           <p>
-            <Link to="/PrivacyPolicy" 
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer"}} 
+            <Link to="/PrivacyPolicy"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
               Privacy Policy
             </Link></p>
           <p>
-            <Link to="/TermsAndConditions" 
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer"}} 
+            <Link to="/TermsAndConditions"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
             >
               Terms & Conditions
             </Link></p>
@@ -101,26 +101,26 @@ const Footer = () => (
         <div className="text-[#E0E0E0] font-normal text-[14px] space-y-1">
           <p>
             <Link
-            to="/AboutUs"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            About Us
+              to="/AboutUs"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              About Us
             </Link>
           </p>
           <p>
             <Link
-            to="/Careers"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            Careers
+              to="/Careers"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Careers
             </Link>
           </p>
           <p>
             <Link
-            to="/HelpAndSupport"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            Help & Support
+              to="/HelpAndSupport"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Help & Support
             </Link>
           </p>
           <p>
@@ -141,14 +141,14 @@ const Footer = () => (
           <p>List your business</p>
           <p>
             <Link
-            to="/faq"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            FAQs
+              to="/faq"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              FAQs
             </Link>
           </p>
           <p>Pricing</p>
-          <p>Support</p>   
+          <p>Support</p>
         </div>
       </div>
 
@@ -158,18 +158,18 @@ const Footer = () => (
         <div className="text-[#E0E0E0] font-normal text-[14px] space-y-1">
           <p>
             <Link
-            to="/PrivacyPolicy"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            Privacy Policy
+              to="/PrivacyPolicy"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Privacy Policy
             </Link>
           </p>
           <p>
             <Link
-            to="/TermsAndConditions"
-            style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
-          >
-            Terms & Conditions
+              to="/TermsAndConditions"
+              style={{ textDecoration: "none", color: "inherit", cursor: "pointer" }}
+            >
+              Terms & Conditions
             </Link>
           </p>
           <p>Cancellation Policy</p>
