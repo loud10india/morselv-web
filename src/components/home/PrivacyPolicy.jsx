@@ -200,15 +200,6 @@ function PrivacyPolicy() {
                 Phone: <span className="font-normal">+91-9818257300</span>
               </span>
             </li>
-            <li>
-              <span className="font-semibold">
-                Address:{" "}
-                <span className="font-normal">
-                  FEMTECH SPHERE TECH PRIVATE LIMITED, AltF Coworking, Suncity
-                  Success Tower, Sector 65, Gurugram, Haryana 122005
-                </span>
-              </span>
-            </li>
           </ul>
           <p className="text-[#5D5D5D] font-montserrat text-[16px] font-normal font-500 leading-[20px] mt-4">
             By using our website or services, you agree to this Privacy Policy

@@ -7,6 +7,7 @@ import HomePage from "./components/home/HomePage";
 import DealsSlider from "./components/deals/DealsSlider";
 import Aboutus from "./components/home/Aboutus";
 import Careers from "./components/home/Career";
+import ListYourBusiness from "./components/home/ListYourBusiness";
 import HelpAndSupport from "./components/home/HelpandSupport";
 import Faq from "./components/home/Faq";
 import PrivacyPolicy from "./components/home/PrivacyPolicy";
@@ -36,6 +37,7 @@ function App() {
             <Route path="deal/:slug/:dealID" element={<DealDetail />} />
             <Route path="AboutUS" element={<Aboutus />} />
             <Route path="Careers" element={<Careers />} />
+            <Route path="ListYourBusiness" element={<ListYourBusiness />} />
             <Route path="HelpAndSupport" element={<HelpAndSupport />} />
             <Route path="faq" element={<Faq />} />
             <Route path="PrivacyPolicy" element={<PrivacyPolicy />} />

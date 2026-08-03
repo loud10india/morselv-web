@@ -32,84 +32,84 @@ function SecondSection() {
           label: "Skin, Hair & Beauty",
           link:
             "/service/14-" +
-            toSlug(res.data[0].find((e) => e.value === 14).label),
+            toSlug(res.data[0]?.find((e) => e.value === 14).label),
         },
         {
           icon: c2,
           label: "Body Therapies",
           link:
             "/service/17-" +
-            toSlug(res.data[0].find((e) => e.value === 17).label),
+            toSlug(res.data[0]?.find((e) => e.value === 17).label),
         },
         {
           icon: c3,
           label: "Health Wellness",
           link:
             "/service/15-" +
-            toSlug(res.data[0].find((e) => e.value === 15).label),
+            toSlug(res.data[0]?.find((e) => e.value === 15).label),
         },
         {
           icon: c4,
           label: "Mental & Emotional Wellness",
           link:
             "/service/18-" +
-            toSlug(res.data[0].find((e) => e.value === 18).label),
+            toSlug(res.data[0]?.find((e) => e.value === 18).label),
         },
         {
           icon: c5,
           label: "Diet & Weight Management",
           link:
             "/service/19-" +
-            toSlug(res.data[0].find((e) => e.value === 19).label),
+            toSlug(res.data[0]?.find((e) => e.value === 19).label),
         },
         {
           icon: c6,
           label: "Travel & Relaxation",
           link:
             "/service/16-" +
-            toSlug(res.data[0].find((e) => e.value === 16).label),
+            toSlug(res.data[0]?.find((e) => e.value === 16).label),
         },
         {
           icon: c7,
           label: "Friends, Fun & Community",
           link:
             "/service/21-" +
-            toSlug(res.data[0].find((e) => e.value === 21).label),
+            toSlug(res.data[0]?.find((e) => e.value === 21).label),
         },
         {
           icon: c8,
           label: "Fitness & Body Movement",
           link:
             "/service/22-" +
-            toSlug(res.data[0].find((e) => e.value === 22).label),
+            toSlug(res.data[0]?.find((e) => e.value === 22).label),
         },
         {
           icon: c9,
           label: "Career & Education",
           link:
             "/service/23-" +
-            toSlug(res.data[0].find((e) => e.value === 23).label),
+            toSlug(res.data[0]?.find((e) => e.value === 23).label),
         },
         {
           icon: c10,
           label: "Kids' Activites & Hobbies",
           link:
             "/service/24-" +
-            toSlug(res.data[0].find((e) => e.value === 24).label),
+            toSlug(res.data[0]?.find((e) => e.value === 24).label),
         },
         {
           icon: c11,
           label: "Finance & Legal Guidance",
           link:
             "/service/25-" +
-            toSlug(res.data[0].find((e) => e.value === 25).label),
+            toSlug(res.data[0]?.find((e) => e.value === 25).label),
         },
         {
           icon: c12,
           label: "Other Services",
           link:
             "/service/26-" +
-            toSlug(res.data[0].find((e) => e.value === 26).label),
+            toSlug(res.data[0]?.find((e) => e.value === 26).label),
         },
       ];
       setCategoryListData(categories);

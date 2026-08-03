@@ -71,7 +71,7 @@ function HelpAndSupport() {
             Quick support on call or chat
           </p>
           <p className="text-[#787878] font-montserrat text-[14px] md:text-[16px] font-semibold">
-            +91-9818257300 | +91-8800802349
+            +91-9818257300
           </p>
         </div>
 
@@ -96,7 +96,7 @@ function HelpAndSupport() {
             Send queries anytime
           </p>
           <p className="text-[#787878] font-montserrat text-[14px] md:text-[16px] font-semibold">
-            hello@morselv.com
+            connect@morselv.com
           </p>
         </div>
 
@@ -121,8 +121,9 @@ function HelpAndSupport() {
           </h3>
           <p className="text-[#787878] font-montserrat text-[12px] md:text-[14px] font-semibold max-w-[380px]">
             Corporate Office: Femtech Sphere Tech Pvt. Ltd. <br />
-            TR-242, Suncity Success Tower, Golf Course Extn Rd, <br />
-            Badshahpur,Sec-65, Gurugram, Haryana Pin-122101
+            422, 4th Floor, Tower A, Suncity Success Tower,<br />
+            Golf Course Extension Road, Sector 65, Gurugram<br />
+            Haryana – 122005
           </p>
         </div>
       </div>
