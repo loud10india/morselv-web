@@ -1,9 +1,22 @@
 import React from "react";
+import Seo from "../utils/Seo";
+import ListYourBusinessForm from "./ListYourBusinessForm";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 function ListYourBusiness() {
   return (
-    <div className="w-full min-h-screen mt-[100px] flex flex-col items-center">
-      <div
+    <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
+      <Seo
+        title="List Your Business"
+        path="/ListYourBusiness"
+        description="Get your salon, spa, clinic, studio or wellness practice in front of women actively searching for trusted services. List your business on Morselv and start receiving enquiries."
+        schema={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "List Your Business", path: "/ListYourBusiness" },
+        ])}
+      />
+
+      <section
         className="w-full h-[330px] flex flex-col items-center justify-center -mt-8 md:-mt-2.5"
         style={{
           background:
@@ -23,6 +36,8 @@ function ListYourBusiness() {
               height="28"
               viewBox="0 0 163 28"
               fill="none"
+              aria-hidden="true"
+              focusable="false"
               className="absolute bottom-2 left-2.5 z-0 opacity-100"
             >
               <path
@@ -39,17 +54,15 @@ function ListYourBusiness() {
           lifestyle services. Build credibility, attract more enquiries, and
           grow your customer base with Morselv.
         </p>
-      </div>
+      </section>
 
-      <a
-        href="https://wa.me/919818257300?text=Hi%20Morselv%20Team%2C%20I'm%20interested%20in%20listing%20my%20business%20on%20Morselv.%20Please%20share%20the%20registration%20process%20and%20available%20listing%20plans."
-        target="_blank"
-        rel="noopener noreferrer"
-        className="mt-12 inline-flex h-[60px] px-[44px] justify-center items-center gap-2 rounded-[10px] bg-[#121212] text-[#FFF] font-montserrat text-[18px] md:text-[20px] font-medium leading-[22px] mb-[145px]"
+      <section
+        aria-label="Business listing enquiry"
+        className="w-full px-4 sm:px-6 mt-12 mb-[145px]"
       >
-        Get Started Free
-      </a>
-    </div>
+        <ListYourBusinessForm />
+      </section>
+    </main>
   );
 }
 

@@ -5,9 +5,12 @@ import AboutBusinessSection from "./AboutBussiness";
 import ServicePopup from "./ServiceDetailPopup";
 import { useParams, useLocation } from "react-router-dom";
 import providers from "../../api/providers";
+import Seo from "../utils/Seo";
+import { localBusinessSchema } from "../../seo/siteConfig";
 
 const ServiceDetail = () => {
   const { providerID } = useParams();
+  const { pathname } = useLocation();
   const [dataSet, setDataset] = useState({});
   const [selectedServiceID, setSelectedServiceID] = useState(-1);
   const [serviceDataset, setServiceDataset] = useState([]);
@@ -35,6 +38,15 @@ const ServiceDetail = () => {
   
   return (
     <div className="flex mx-auto flex-col w-full">
+      <Seo
+        title={dataSet.Name || "Service Provider"}
+        description={
+          dataSet.Description ||
+            `Explore services, timings and location for ${dataSet.Name || "this provider"} on Morselv.`
+        }
+        type="profile"
+        schema={localBusinessSchema(dataSet, pathname)}
+      />
       {/* Content with padding */}
       <div className="px-3 sm:px-4 md:px-5">
         <HeaderSectionService dataSet={dataSet} imagesDataset={imagesDataset} />

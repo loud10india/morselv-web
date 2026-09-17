@@ -2,12 +2,15 @@ import React, { useEffect, useRef } from "react";
 import Home from "./Home";
 import SecondSection from "./SecondSection";
 import PartnerSection from "./PartnerSection";
+import GallerySection from "./GallerySection";
 import Service from "./Service";
 import Deals from "./Deals";
 import Popular from "./Popular";
 import { useLoc } from "../context/LocationContext";
 import HomeError from "./HomeError";
 import NotServicable from "./NotServicable";
+import Seo from "../utils/Seo";
+import { organizationSchema } from "../../seo/siteConfig";
 
 function HomePage() {
   const homeRef = useRef(null);
@@ -51,6 +54,7 @@ function HomePage() {
 
   return (
     <div className="w-full">
+      <Seo path="/" schema={organizationSchema()} />
       <div ref={homeRef}>
         <Home />
       </div>
@@ -61,6 +65,7 @@ function HomePage() {
         <div className="bg-[#fbfbfb]">
           <PartnerSection />
         </div>
+        <GallerySection />
         <div ref={dealsRef}>
           <Deals />
         </div>

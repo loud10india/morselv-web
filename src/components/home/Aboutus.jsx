@@ -1,8 +1,19 @@
 import React from "react";
+import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 function Aboutus() {
     return (
         <div className="w-full bg-white text-black font-montserrat overflow-x-hidden">
+          <Seo
+            title="About Us"
+            path="/AboutUS"
+            description="Morselv is India's women-centric marketplace connecting you with trusted salons, spas, clinics, studios and lifestyle experts. Learn about our mission and the team behind it."
+            schema={breadcrumbSchema([
+              { name: "Home", path: "/" },
+              { name: "About Us", path: "/AboutUS" },
+            ])}
+          />
             {/** ===================== DESKTOP (>= md) ===================== */}
             <div className="hidden md:block">
                 {/** HERO */}

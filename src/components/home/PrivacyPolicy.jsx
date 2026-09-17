@@ -1,8 +1,19 @@
 import React from "react";
+import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 function PrivacyPolicy() {
   return (
     <div className="w-full min-h-screen flex flex-col items-center bg-white font-montserrat mt-[70px] md:mt-[90px]">
+      <Seo
+        title="Privacy Policy"
+        path="/PrivacyPolicy"
+        description="How Morselv collects, uses, stores and protects your personal information."
+        schema={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Privacy Policy", path: "/PrivacyPolicy" },
+        ])}
+      />
       {/* ================= HERO SECTION ================= */}
       <div
         className="w-full flex flex-col items-center justify-center text-center px-4 py-10"

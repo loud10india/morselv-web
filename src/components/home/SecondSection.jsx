@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
-import c1 from "../assets/c1.svg";
-import c2 from "../assets/c2.svg";
-import c3 from "../assets/c3.svg";
-import c4 from "../assets/c4.svg";
-import c5 from "../assets/c5.svg";
-import c6 from "../assets/c6.svg";
-import c7 from "../assets/c7.svg";
-import c8 from "../assets/c8.svg";
-import c9 from "../assets/c10.svg";
-import c10 from "../assets/c11.svg";
-import c11 from "../assets/c12.svg";
-import c12 from "../assets/c9.svg";
+import c1 from "../assets/c1.png";
+import c2 from "../assets/c2.png";
+import c3 from "../assets/c3.png";
+import c4 from "../assets/c4.png";
+import c5 from "../assets/c5.png";
+import c6 from "../assets/c6.png";
+import c7 from "../assets/c7.png";
+import c8 from "../assets/c8.png";
+import c9 from "../assets/c10.png";
+import c10 from "../assets/c11.png";
+import c11 from "../assets/c12.png";
+import c12 from "../assets/c9.png";
 import { Link } from "react-router-dom";
 import category from "../../api/category";
 
@@ -131,6 +131,10 @@ function SecondSection() {
             <img
               src={category.icon}
               alt={category.label}
+              loading="lazy"
+              decoding="async"
+              width="85"
+              height="85"
               className="w-[65px] h-[65px] sm:w-[75px] sm:h-[75px] md:w-[85px] md:h-[85px] object-contain mb-3"
             />
             <span className="text-center text-xs sm:text-sm md:text-base font-medium text-black">

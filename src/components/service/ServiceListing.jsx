@@ -10,6 +10,7 @@ import subCategory from "../../api/subCategory.js";
 import providers from "../../api/providers";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import Seo from "../utils/Seo";
 
 // Distance filter options
 const distances = [
@@ -66,6 +67,19 @@ function ServiceListing() {
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, "-")
       .replace(/(^-|-$)+/g, "");
+
+  // The URL only carries a slug. Until the category list loads we show a
+  // readable version of it rather than the raw "skin-hair-beauty".
+  const prettifySlug = (slug) =>
+    slug
+      .split("-")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+
+  // Real label for an ID, e.g. 14 -> "Skin, Hair & Beauty".
+  const labelForID = (list, id) =>
+    list.find((item) => (item.value ?? item.ID) === id)?.label;
 
   // Scroll handler for floating filters
   useEffect(() => {
@@ -126,7 +140,13 @@ function ServiceListing() {
     // Parse category
     if (parts[1]) {
       const [catID, ...catSlug] = parts[1].split("-");
-      const newCategory = { ID: parseInt(catID), Name: catSlug.join("-") };
+      const parsedCatID = parseInt(catID);
+      const newCategory = {
+        ID: parsedCatID,
+        Name:
+          labelForID(categoryList, parsedCatID) ??
+          prettifySlug(catSlug.join("-")),
+      };
       if (
         selectedCategory.ID !== newCategory.ID ||
         selectedCategory.Name !== newCategory.Name
@@ -139,7 +159,13 @@ function ServiceListing() {
     // Parse subcategory
     if (parts[2]) {
       const [subID, ...subSlug] = parts[2].split("-");
-      const newSubCategory = { ID: parseInt(subID), Name: subSlug.join("-") };
+      const parsedSubID = parseInt(subID);
+      const newSubCategory = {
+        ID: parsedSubID,
+        Name:
+          labelForID(subCategoryList, parsedSubID) ??
+          prettifySlug(subSlug.join("-")),
+      };
       if (
         selectedSubCategory.ID !== newSubCategory.ID ||
         selectedSubCategory.Name !== newSubCategory.Name
@@ -165,7 +191,12 @@ function ServiceListing() {
             : `${minVal} - ${maxVal}km`,
       });
     }
-  }, [locationRouter.pathname, locationRouter.search]);
+  }, [
+    locationRouter.pathname,
+    locationRouter.search,
+    categoryList,
+    subCategoryList,
+  ]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -683,6 +714,20 @@ function ServiceListing() {
 
   return (
     <div className="bg-white w-full overflow-visible">
+      <Seo
+        title={
+          selectedSubCategory.Name
+            ? `${selectedSubCategory.Name} in ${location.city || "your city"}`
+            : selectedCategory.Name
+            ? `${selectedCategory.Name} Near You`
+            : "Services Near You"
+        }
+        description={
+          selectedCategory.Name
+            ? `Browse verified ${selectedCategory.Name} providers near you on Morselv. Compare businesses by area and distance, then enquire directly.`
+            : "Browse verified salons, spas, clinics, fitness studios and lifestyle experts near you. Filter by category and distance to find the right provider on Morselv."
+        }
+      />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
 
@@ -694,12 +739,12 @@ function ServiceListing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">
           {/* Page Title */}
           <div className="mb-8">
-            <h2 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
+            <h1 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               SERVICE PROVIDERS{" "}
               {selectedCategory.Name && (
                 <span className="font-normal">- {selectedCategory.Name}</span>
               )}
-            </h2>
+            </h1>
           </div>
 
           {/* Filters Section */}
@@ -950,12 +995,12 @@ function ServiceListing() {
       <div className="block sm:hidden px-4 pt-[120px] pb-4">
         {/* Title */}
         <div className="mb-6">
-          <h2 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
+          <h1 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             SERVICE PROVIDERS{" "}
             {selectedCategory.Name && (
               <span className="font-normal">- {selectedCategory.Name}</span>
             )}{" "}
-          </h2>
+          </h1>
         </div>
 
         {/* Filters label */}

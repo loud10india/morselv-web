@@ -1,4 +1,6 @@
 import React from "react";
+import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 function Careers() {
   const jobs = [
@@ -14,6 +16,15 @@ function Careers() {
 
   return (
     <div className="w-full min-h-screen mt-[100px] flex flex-col items-center">
+      <Seo
+        title="Careers"
+        path="/Careers"
+        description="Join the Morselv team. Explore open roles and help build India's women-centric marketplace for wellness, beauty, fitness and lifestyle services."
+        schema={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Careers", path: "/Careers" },
+        ])}
+      />
       <div
         className="w-full h-[330px] flex flex-col items-center justify-center -mt-8 md:-mt-2.5"
         style={{

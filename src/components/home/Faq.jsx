@@ -1,4 +1,6 @@
 import React, { useState } from "react";
+import Seo from "../utils/Seo";
+import { breadcrumbSchema, faqSchema } from "../../seo/siteConfig";
 
 const faqs = [
   {
@@ -103,6 +105,12 @@ export default function FAQSection() {
 
   return (
     <div className="xl:pt-20 lg:pt-20 md:pt-10 pt-10 flex flex-col h-auto">
+      <Seo
+        title="FAQs"
+        path="/faq"
+        description="Answers to common questions about booking services, payments, cancellations, refunds and listing your business on Morselv."
+        schema={faqSchema(faqs)}
+      />
       <div
         className="w-full flex flex-col items-center justify-center text-center px-4 py-10"
         style={{
@@ -111,9 +119,9 @@ export default function FAQSection() {
         }}
       >
       <main className="flex-grow max-w-3xl mx-auto p-6 pt-70">
-        <h2 className="xl:text-5xl text-3xl font-semibold text-center text-[#000] mb-8">
+        <h1 className="xl:text-5xl text-3xl font-semibold text-center text-[#000] mb-8">
           Frequently asked questions
-        </h2>
+        </h1>
         <div className="space-y-4">
           {faqs.map((faq, index) => (
             <div key={index} className="bg-gray-50 rounded-lg shadow-sm">

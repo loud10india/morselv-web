@@ -1,9 +1,10 @@
 import React from "react";
+import { whatsappLink, WHATSAPP_MESSAGES } from "../../constants/contact";
 
 function FloatingWhatsApp() {
   return (
     <a
-      href="https://wa.me/919818257300?text=Hi%20Morselv!%20I'm%20looking%20to%20book%20a%20service.%20Could%20you%20please%20help%20me%3F"
+      href={whatsappLink(WHATSAPP_MESSAGES.general)}
       target="_blank"
       rel="noopener noreferrer"
       aria-label="Chat with us on WhatsApp"

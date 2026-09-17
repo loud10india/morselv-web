@@ -1,9 +1,9 @@
 import React from "react";
-import bgImg from "../assets/bgImg.png";
+import bgImg from "../assets/bgImg.webp";
 import overlay from "../assets/contentoverlay.png";
 import SearchBar from "../home/SearchBar";
 import tick from "../assets/tick.png";
-import bgimgmobile from "../assets/bgimgmobile.png";
+import bgimgmobile from "../assets/bgimgmobile.webp";
 
 function Home() {
   return (

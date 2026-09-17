@@ -10,6 +10,7 @@ import subCategory from "../../api/subCategory.js";
 import deals from "../../api/deals";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
+import Seo from "../utils/Seo";
 
 // Distance filter options
 const distances = [
@@ -637,6 +638,10 @@ const toggleNestedDropdownFloating = (index) => {
 
   return (
     <div className="bg-white w-full overflow-visible">
+      <Seo
+        title="Deals Around You"
+        description="Discover limited-time offers from trusted salons, spas, wellness studios and lifestyle providers near you. Compare deals and enquire directly on Morselv."
+      />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
 

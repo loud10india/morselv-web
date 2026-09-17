@@ -1,8 +1,19 @@
 import React from "react";
+import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 function TermsAndConditions() {
   return (
     <div className="w-full min-h-screen bg-white flex flex-col mt-[70px] md:mt-[70px]">
+      <Seo
+        title="Terms & Conditions"
+        path="/TermsAndConditions"
+        description="The terms that govern your use of the Morselv platform and services."
+        schema={breadcrumbSchema([
+          { name: "Home", path: "/" },
+          { name: "Terms & Conditions", path: "/TermsAndConditions" },
+        ])}
+      />
       {/* Top Gradient Box */}
       <div className="w-full bg-gradient-to-b from-[#FECD8C66] to-transparent flex flex-col justify-center items-center text-center px-4">
         <h2 className="text-[#FECD8C] font-montserrat text-2xl font-semibold  leading-[125%] mt-[108px]">

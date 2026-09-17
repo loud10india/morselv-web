@@ -1,0 +1,15 @@
+User-agent: *
+Allow: /
+
+# Crawler traps: filtered/faceted listing permutations produce near-duplicate
+# pages with no unique content. The canonical listing pages stay crawlable.
+Disallow: /*?q=
+Disallow: /*?distance=
+Disallow: /*&
+Allow: /*.js$
+Allow: /*.css$
+Allow: /*.svg$
+Allow: /*.png$
+Allow: /*.jpg$
+
+Sitemap: https://www.morselv.com/sitemap.xml

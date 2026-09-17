@@ -56,9 +56,9 @@ const PopularSearches = () => {
 
 return (
   <div className="font-montserrat p-3 sm:p-4 bg-[#fbfbfb]">
-    <h1 className="text-black text-xl md:text-3xl font-bold leading-tight sm:leading-[75px] mb-2 sm:mb-2">
+    <h2 className="text-black text-xl md:text-3xl font-bold leading-tight sm:leading-[75px] mb-2 sm:mb-2">
       POPULAR SEARCHES
-    </h1>
+    </h2>
 
     {/* Paragraph version for ALL screens */}
   <div className="mt-2 overflow-x-auto">

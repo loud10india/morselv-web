@@ -210,10 +210,13 @@ const Header = () => {
     },
   ];
 
+  // Drives the mobile menu; the desktop nav mirrors these below.
   const mainNavItems = [
     { name: "Home", url: "./" },
     { name: "Discover services", url: "./service" },
     { name: "Deals & offers", url: "./deals" },
+    { name: "List Your Business", url: "/ListYourBusiness" },
+    { name: "Customer Panel", url: "/customer-panel" },
     // { name: "Contact" },
   ];
 
@@ -328,8 +331,10 @@ const Header = () => {
         </div>
 
         {/* Navigation */}
-        <nav className="flex items-center gap-[60px] relative">
-          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300">
+        {/* Five items no longer fit a fixed 60px gap at the lg breakpoint,
+            so the spacing scales up with the viewport instead. */}
+        <nav className="flex items-center gap-[22px] xl:gap-[40px] 2xl:gap-[60px] relative">
+          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300 whitespace-nowrap">
             <Link to="/">Home</Link>
           </span>
 
@@ -343,7 +348,7 @@ const Header = () => {
               }}
               style={{ textDecoration: "none" }}
             >
-              <span className="text-white text-[16px] font-montserrat hover:text-gray-300">
+              <span className="text-white text-[16px] font-montserrat hover:text-gray-300 whitespace-nowrap">
                 <Link to="/service">Discover services</Link>
               </span>
               {/* <img
@@ -421,13 +426,21 @@ const Header = () => {
             )}
           </div>
 
-          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300">
+          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300 whitespace-nowrap">
             <Link
               to="/deals"
             // state={{ categoryState: { ID: 2, Name: "Dummy" } }}
             >
               Deals & offers
             </Link>
+          </span>
+
+          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300 whitespace-nowrap">
+            <Link to="/ListYourBusiness">List Your Business</Link>
+          </span>
+
+          <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300 whitespace-nowrap">
+            <Link to="/customer-panel">Customer Panel</Link>
           </span>
           {/* <span className="text-white text-[16px] font-montserrat cursor-pointer hover:text-gray-300">
             Contact

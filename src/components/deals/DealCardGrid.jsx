@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import locationIcon from "../assets/mdi_location.svg";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -10,18 +10,13 @@ const toSlug = (str) =>
 
 function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
   const navigate = useNavigate();
-  const [visibleCards, setVisibleCards] = useState(16);  //shows 16 card initially
 
   const handleCardClick = (deal) => {
     navigate(`/deal/${toSlug(deal.dealName)}/${deal.id}`);
   };
 
-  const loadMore = () => {
-    setVisibleCards(prev => prev + 16); // Load 16 more cards each time
-  };
 
-  const displayedData = data.slice(0, visibleCards);
-  const hasMore = visibleCards < data.length;
+  const displayedData = data;
   return (
     <section className="w-full bg-white pt-6 pb-12 sm:pt-[45.75px] sm:pb-[50px]">
       {/* Breadcrumb - Consistent across all screen sizes */}
@@ -109,16 +104,6 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
               Load More
             </button>
           </div> */}
-          {hasMore && (
-            <div className="mt-[35.5px] flex justify-center">
-              <button
-                onClick={loadMore}
-                className="inline-flex h-[60px] px-[44px] py-[20px] justify-center items-center gap-[10px] rounded-[10px] bg-[#121212] text-white font-montserrat text-[20px] font-medium leading-[110%] hover:bg-[#333] transition-colors"
-              >
-                View More
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -186,16 +171,6 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
               Load More
             </button>
           </div> */}
-          {hasMore && (
-            <div className="mt-8 flex justify-center">
-              <button
-                onClick={loadMore}
-                className="px-8 py-3 rounded-lg bg-[#121212] text-white font-montserrat text-base font-medium hover:bg-[#333] transition-colors"
-              >
-                View More
-              </button>
-            </div>
-          )}
         </div>
       </div>
 
@@ -269,16 +244,6 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
             Load More
           </button>
         </div> */}
-        {hasMore && (
-          <div className="mt-8 flex justify-center">
-            <button
-              onClick={loadMore}
-              className="px-8 py-3 rounded-lg bg-[#121212] text-white font-montserrat text-sm font-medium hover:bg-[#333] transition-colors"
-            >
-              View More
-            </button>
-          </div>
-        )}
       </div>
     </section>
   );
