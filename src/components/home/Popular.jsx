@@ -91,7 +91,9 @@ return (
     </p>
   </div>
 </div>
-    <style jsx>{`
+    {/* `<style jsx>` is a Next.js idiom. Plain React passes `jsx` straight to
+        the DOM, which logs "Received `true` for a non-boolean attribute". */}
+    <style>{`
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;

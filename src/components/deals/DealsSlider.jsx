@@ -29,6 +29,17 @@ function DealSlider() {
   const { categoryState, subCategoryState } = useLocation().state || {};
   const [showCategories, setShowCategories] = useState(false);
   const [showDistance, setShowDistance] = useState(false);
+  // The URL carries only a slug; resolve the real label from the API list and
+  // fall back to a readable version of the slug while that list loads.
+  const prettifySlug = (slug) =>
+    slug
+      .split("-")
+      .filter(Boolean)
+      .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+      .join(" ");
+  const labelForID = (list, id) =>
+    list.find((item) => (item.value ?? item.ID) === id)?.label;
+
   const [categoryList, setCategoryList] = useState([]);
   const [subCategoryList, setSubCategoryList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
@@ -159,12 +170,24 @@ const toggleNestedDropdownFloating = (index) => {
 
     if (parts[1]) {
       const [catID, ...catSlug] = parts[1].split("-");
-      setSelectedCategory({ ID: parseInt(catID), Name: catSlug.join("-") });
+      const parsedCatID = parseInt(catID);
+      setSelectedCategory({
+        ID: parsedCatID,
+        Name:
+          labelForID(categoryList, parsedCatID) ??
+          prettifySlug(catSlug.join("-")),
+      });
     }
 
     if (parts[2]) {
       const [subID, ...subSlug] = parts[2].split("-");
-      setSelectedSubCategory({ ID: parseInt(subID), Name: subSlug.join("-") });
+      const parsedSubID = parseInt(subID);
+      setSelectedSubCategory({
+        ID: parsedSubID,
+        Name:
+          labelForID(subCategoryList, parsedSubID) ??
+          prettifySlug(subSlug.join("-")),
+      });
     }
 
     const params = new URLSearchParams(locationRouter.search);
@@ -185,7 +208,7 @@ const toggleNestedDropdownFloating = (index) => {
         }`,
       });
     }
-  }, [locationRouter]);
+  }, [locationRouter, categoryList, subCategoryList]);
 
   // Update URL when filters change
   useEffect(() => {
@@ -639,8 +662,16 @@ const toggleNestedDropdownFloating = (index) => {
   return (
     <div className="bg-white w-full overflow-visible">
       <Seo
-        title="Deals Around You"
-        description="Discover limited-time offers from trusted salons, spas, wellness studios and lifestyle providers near you. Compare deals and enquire directly on Morselv."
+        title={
+          selectedCategory.Name
+            ? `${selectedCategory.Name} Deals`
+            : "Deals Around You"
+        }
+        description={
+          selectedCategory.Name
+            ? `Limited-time ${selectedCategory.Name} offers from trusted providers near you. Compare deals and enquire directly on Morselv.`
+            : "Discover limited-time offers from trusted salons, spas, wellness studios and lifestyle providers near you. Compare deals and enquire directly on Morselv."
+        }
       />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
@@ -652,12 +683,12 @@ const toggleNestedDropdownFloating = (index) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">
           {/* Page Title */}
           <div className="mb-8">
-            <h2 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
+            <h1 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               Exclusive Deals{" "}
               {selectedCategory.Name && (
                 <span className="font-normal">- {selectedCategory.Name}</span>
               )}
-            </h2>
+            </h1>
           </div>
 
           {/* Filters Section */}
@@ -904,12 +935,12 @@ const toggleNestedDropdownFloating = (index) => {
       <div className="block sm:hidden px-4 pt-[120px] pb-4">
         {/* Title */}
         <div className="mb-6">
-          <h2 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
+          <h1 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             Exclusive Deals{" "}
           {selectedCategory.Name && (
             <span className="font-normal">- {selectedCategory.Name}</span>
           )}{" "}
-          </h2>
+          </h1>
         </div>
 
         {/* Filters label */}
