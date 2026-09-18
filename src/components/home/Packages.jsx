@@ -117,7 +117,7 @@ function Packages() {
       <Seo
         title="Packages"
         path="/packages"
-        description="Mor-Selv branding packages for businesses — Growing Talent (₹15,000/mo), Premium Luxury (₹25,000/mo), Signature Elite (₹35,000/mo) and fully bespoke plans. Elevate your brand on India's women-centric marketplace."
+        description="Mor-Selv branding packages for businesses — Growing Talent, Premium Luxury and Signature Elite, from ₹15,000/month, plus fully bespoke plans."
         schema={breadcrumbSchema([
           { name: "Home", path: "/" },
           { name: "Packages", path: "/packages" },

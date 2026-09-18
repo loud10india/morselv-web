@@ -11,6 +11,7 @@ import providers from "../../api/providers";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 // Distance filter options
 const distances = [
@@ -727,6 +728,18 @@ function ServiceListing() {
             ? `Browse verified ${selectedCategory.Name} providers near you on Morselv. Compare businesses by area and distance, then enquire directly.`
             : "Browse verified salons, spas, clinics, fitness studios and lifestyle experts near you. Filter by category and distance to find the right provider on Morselv."
         }
+        schema={breadcrumbSchema(
+          [
+            { name: "Home", path: "/" },
+            { name: "Services", path: "/service" },
+            selectedCategory.Name
+              ? {
+                  name: selectedCategory.Name,
+                  path: `/service/${selectedCategory.ID}-${toSlug(selectedCategory.Name)}`,
+                }
+              : null,
+          ].filter(Boolean)
+        )}
       />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>

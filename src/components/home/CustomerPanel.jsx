@@ -12,19 +12,60 @@ const inputBase =
 const errorMessage = (error, fallback) =>
   typeof error === "string" && error ? error : fallback;
 
+/**
+ * Registration only.
+ *
+ * Verified phone/email is planned but not required yet, so this is a single
+ * step. The OTP endpoints (/api/customer/verify/*) already exist and the
+ * customers table already carries IsVerified, so turning verification on later
+ * needs no migration — just a second step here.
+ */
+
+/**
+ * Declared at module scope on purpose. Defining this inside CustomerPanel makes
+ * it a fresh component type on every render, so React unmounts the input and
+ * the field loses focus after each keystroke.
+ */
+function Field({ id, label, type = "text", placeholder, autoComplete, maxLength, inputMode, value, error, onChange }) {
+  return (
+    <div className="flex flex-col gap-2">
+      <label htmlFor={id} className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
+        {label} <span className="text-[#C0392B]">*</span>
+      </label>
+      <input
+        id={id}
+        type={type}
+        inputMode={inputMode}
+        maxLength={maxLength}
+        autoComplete={autoComplete}
+        placeholder={placeholder}
+        value={value}
+        onChange={onChange}
+        aria-invalid={!!error}
+        className={`${inputBase} ${error ? "border-[#C0392B]" : "border-[#E0E0E0]"}`}
+      />
+      {error && (
+        <p role="alert" className="font-montserrat text-[13px] text-[#C0392B]">
+          {error}
+        </p>
+      )}
+    </div>
+  );
+}
+
 function CustomerPanel() {
-  const [step, setStep] = useState("details"); // details -> code -> verified
   const [values, setValues] = useState({ name: "", email: "", phone: "" });
-  const [otp, setOtp] = useState("");
+  const [honeypot, setHoneypot] = useState("");
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
+  const [registered, setRegistered] = useState(false);
 
   const setField = (name) => (event) => {
     setValues((prev) => ({ ...prev, [name]: event.target.value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
-  const validateDetails = () => {
+  const validate = () => {
     const found = {};
     if (!values.name.trim()) found.name = "Name is required";
     if (!values.email.trim()) found.email = "Email address is required";
@@ -39,58 +80,35 @@ function CustomerPanel() {
     return Object.keys(found).length === 0;
   };
 
-  const handleStart = async (event) => {
+  const handleSubmit = async (event) => {
     event.preventDefault();
-    if (!validateDetails()) return;
+    if (!validate()) return;
 
     setBusy(true);
     try {
-      await customer.startVerification({
+      await customer.register({
+        website: honeypot, // honeypot — server drops the request when filled
         name: values.name.trim(),
         email: values.email.trim(),
         phone: values.phone.replace(/\D/g, ""),
       });
-      setStep("code");
-      toast.success("We've sent a verification code to your email.");
+      setRegistered(true);
+      toast.success("You're registered with Morselv.");
     } catch (error) {
       toast.error(
-        errorMessage(error, "We couldn't start verification. Please try again.")
+        errorMessage(error, "We couldn't complete your registration. Please try again.")
       );
     } finally {
       setBusy(false);
     }
   };
 
-  const handleConfirm = async (event) => {
-    event.preventDefault();
-    if (!otp.trim()) {
-      setErrors({ otp: "Enter the code we sent you" });
-      return;
-    }
-
-    setBusy(true);
-    try {
-      await customer.confirmVerification({
-        email: values.email.trim(),
-        otp: otp.trim(),
-      });
-      setStep("verified");
-      toast.success("Your account is verified.");
-    } catch (error) {
-      toast.error(errorMessage(error, "That code didn't work. Please try again."));
-    } finally {
-      setBusy(false);
-    }
-  };
-
-  const borderFor = (name) => (errors[name] ? "border-[#C0392B]" : "border-[#E0E0E0]");
-
   return (
     <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
       <Seo
         title="Customer Panel"
         path="/customer-panel"
-        description="Verify your details to access your Morselv customer panel — track enquiries, manage bookings and view your saved providers across web and mobile."
+        description="Register with Morselv to keep your details with us and hear first about deals, new providers and offers near you."
         noindex
         schema={breadcrumbSchema([
           { name: "Home", path: "/" },
@@ -109,169 +127,24 @@ function CustomerPanel() {
           CUSTOMER PANEL
         </p>
         <h1 className="font-inter text-[36px] md:text-[56px] font-semibold leading-[44px] md:leading-[68px] text-[#000] text-center max-w-[900px] px-4 mt-2">
-          Your Morselv account
+          Register with Morselv
         </h1>
         <p className="max-w-[720px] text-center text-[#5D5D5D] font-montserrat text-[17px] md:text-[19px] leading-[27px] mt-5 px-4">
-          Verify your name, email and phone number once to access your enquiries,
-          bookings and saved providers — on web and mobile.
+          Share your details once and we&rsquo;ll keep you posted on deals, new
+          providers and offers near you.
         </p>
       </section>
 
-      <section
-        aria-label="Customer verification"
-        className="w-full px-4 sm:px-6 mt-12 mb-[120px]"
-      >
+      <section aria-label="Customer registration" className="w-full px-4 sm:px-6 mt-12 mb-[120px]">
         <div className="mx-auto w-full max-w-[560px] rounded-[16px] border border-[#E0E0E0] bg-white p-6 shadow-[0_3px_15px_rgba(0,0,0,0.06)] sm:p-8">
-          {step === "details" && (
-            <form onSubmit={handleStart} noValidate>
-              <h2 className="font-inter text-[24px] font-semibold text-[#121212]">
-                Verify your details
-              </h2>
-              <p className="mt-2 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
-                We'll send a one-time code to confirm it's really you.
-              </p>
-
-              <div className="mt-7 flex flex-col gap-5">
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="name" className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
-                    Name <span className="text-[#C0392B]">*</span>
-                  </label>
-                  <input
-                    id="name"
-                    type="text"
-                    autoComplete="name"
-                    placeholder="Your full name"
-                    value={values.name}
-                    onChange={setField("name")}
-                    aria-invalid={!!errors.name}
-                    className={`${inputBase} ${borderFor("name")}`}
-                  />
-                  {errors.name && (
-                    <p role="alert" className="font-montserrat text-[13px] text-[#C0392B]">
-                      {errors.name}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="email" className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
-                    Email Address <span className="text-[#C0392B]">*</span>
-                  </label>
-                  <input
-                    id="email"
-                    type="email"
-                    autoComplete="email"
-                    placeholder="you@example.com"
-                    value={values.email}
-                    onChange={setField("email")}
-                    aria-invalid={!!errors.email}
-                    className={`${inputBase} ${borderFor("email")}`}
-                  />
-                  {errors.email && (
-                    <p role="alert" className="font-montserrat text-[13px] text-[#C0392B]">
-                      {errors.email}
-                    </p>
-                  )}
-                </div>
-
-                <div className="flex flex-col gap-2">
-                  <label htmlFor="phone" className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
-                    Phone Number <span className="text-[#C0392B]">*</span>
-                  </label>
-                  <input
-                    id="phone"
-                    type="tel"
-                    inputMode="numeric"
-                    autoComplete="tel"
-                    maxLength={15}
-                    placeholder="10-digit mobile number"
-                    value={values.phone}
-                    onChange={setField("phone")}
-                    aria-invalid={!!errors.phone}
-                    className={`${inputBase} ${borderFor("phone")}`}
-                  />
-                  {errors.phone && (
-                    <p role="alert" className="font-montserrat text-[13px] text-[#C0392B]">
-                      {errors.phone}
-                    </p>
-                  )}
-                </div>
-              </div>
-
-              <button
-                type="submit"
-                disabled={busy}
-                className="mt-8 inline-flex h-[56px] w-full items-center justify-center rounded-[10px] bg-[#121212] font-montserrat text-[17px] font-medium text-white transition-colors hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {busy ? "Sending code…" : "Send verification code"}
-              </button>
-            </form>
-          )}
-
-          {step === "code" && (
-            <form onSubmit={handleConfirm} noValidate>
-              <h2 className="font-inter text-[24px] font-semibold text-[#121212]">
-                Enter your code
-              </h2>
-              <p className="mt-2 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
-                We sent a one-time code to{" "}
-                <span className="font-medium text-[#121212]">{values.email}</span>.
-                It expires in 10 minutes.
-              </p>
-
-              <div className="mt-7 flex flex-col gap-2">
-                <label htmlFor="otp" className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
-                  Verification code <span className="text-[#C0392B]">*</span>
-                </label>
-                <input
-                  id="otp"
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="one-time-code"
-                  maxLength={10}
-                  placeholder="Enter the code"
-                  value={otp}
-                  onChange={(e) => {
-                    setOtp(e.target.value);
-                    setErrors((prev) => ({ ...prev, otp: undefined }));
-                  }}
-                  aria-invalid={!!errors.otp}
-                  className={`${inputBase} ${borderFor("otp")} tracking-[0.3em]`}
-                />
-                {errors.otp && (
-                  <p role="alert" className="font-montserrat text-[13px] text-[#C0392B]">
-                    {errors.otp}
-                  </p>
-                )}
-              </div>
-
-              <button
-                type="submit"
-                disabled={busy}
-                className="mt-8 inline-flex h-[56px] w-full items-center justify-center rounded-[10px] bg-[#121212] font-montserrat text-[17px] font-medium text-white transition-colors hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-60"
-              >
-                {busy ? "Verifying…" : "Verify and continue"}
-              </button>
-
-              <button
-                type="button"
-                onClick={() => setStep("details")}
-                className="mt-4 w-full font-montserrat text-[14px] text-[#5D5D5D] underline"
-              >
-                Change my details
-              </button>
-            </form>
-          )}
-
-          {step === "verified" && (
+          {registered ? (
             <div role="status" className="text-center">
               <h2 className="font-inter text-[26px] font-semibold text-[#121212]">
-                You're verified
+                You&rsquo;re registered
               </h2>
               <p className="mt-3 font-montserrat text-[16px] leading-[26px] text-[#5D5D5D]">
-                Thanks {values.name.trim().split(" ")[0]}. Your Morselv customer
-                account is confirmed. Browse services and your enquiries will be
-                linked to this account.
+                Thanks {values.name.trim().split(" ")[0]}. Your details are with
+                Morselv — browse services and enquire with any provider.
               </p>
               <a
                 href="/service"
@@ -280,6 +153,62 @@ function CustomerPanel() {
                 Explore services
               </a>
             </div>
+          ) : (
+            <form onSubmit={handleSubmit} noValidate className="relative">
+              <h2 className="font-inter text-[24px] font-semibold text-[#121212]">
+                Your details
+              </h2>
+              <p className="mt-2 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
+                Takes a few seconds. No password needed.
+              </p>
+
+              {/* Honeypot — hidden from people, irresistible to bots. */}
+              <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+                <label htmlFor="cp-website">Website</label>
+                <input
+                  id="cp-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
+
+              <div className="mt-7 flex flex-col gap-5">
+                <Field id="name" value={values.name} error={errors.name} onChange={setField("name")} label="Name" autoComplete="name" placeholder="Your full name" />
+                <Field
+                  id="email"
+                  label="Email Address"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="you@example.com"
+                />
+                <Field
+                  id="phone"
+                  label="Phone Number"
+                  type="tel"
+                  inputMode="numeric"
+                  autoComplete="tel"
+                  maxLength={15}
+                  placeholder="10-digit mobile number"
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={busy}
+                className="mt-8 inline-flex h-[56px] w-full items-center justify-center rounded-[10px] bg-[#121212] font-montserrat text-[17px] font-medium text-white transition-colors hover:bg-[#333] disabled:cursor-not-allowed disabled:opacity-60"
+              >
+                {busy ? "Registering…" : "Register"}
+              </button>
+
+              <p className="mt-4 font-montserrat text-[13px] leading-[20px] text-[#8A8A8A]">
+                By registering, you agree to be contacted by Morselv about
+                services and offers.
+              </p>
+            </form>
           )}
         </div>
       </section>

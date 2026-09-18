@@ -11,6 +11,7 @@ import deals from "../../api/deals";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
+import { breadcrumbSchema } from "../../seo/siteConfig";
 
 // Distance filter options
 const distances = [
@@ -672,6 +673,13 @@ const toggleNestedDropdownFloating = (index) => {
             ? `Limited-time ${selectedCategory.Name} offers from trusted providers near you. Compare deals and enquire directly on Morselv.`
             : "Discover limited-time offers from trusted salons, spas, wellness studios and lifestyle providers near you. Compare deals and enquire directly on Morselv."
         }
+        schema={breadcrumbSchema(
+          [
+            { name: "Home", path: "/" },
+            { name: "Deals", path: "/deals" },
+            selectedCategory.Name ? { name: selectedCategory.Name, path: "/deals" } : null,
+          ].filter(Boolean)
+        )}
       />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>

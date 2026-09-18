@@ -53,6 +53,7 @@ function Seo({
   description = DEFAULT_DESCRIPTION,
   path,
   image = DEFAULT_OG_IMAGE,
+  imageAlt,
   type = "website",
   noindex = false,
   schema,
@@ -80,6 +81,8 @@ function Seo({
     upsertMeta("property", "og:description", description);
     upsertMeta("property", "og:url", canonical);
     upsertMeta("property", "og:image", image);
+    // Social crawlers surface this for screen readers and when an image fails.
+    upsertMeta("property", "og:image:alt", imageAlt || fullTitle);
     upsertMeta("property", "og:locale", "en_IN");
 
     upsertMeta("name", "twitter:card", "summary_large_image");
@@ -87,7 +90,8 @@ function Seo({
     upsertMeta("name", "twitter:title", fullTitle);
     upsertMeta("name", "twitter:description", description);
     upsertMeta("name", "twitter:image", image);
-  }, [fullTitle, description, canonical, image, type, noindex]);
+    upsertMeta("name", "twitter:image:alt", imageAlt || fullTitle);
+  }, [fullTitle, description, canonical, image, imageAlt, type, noindex]);
 
   useEffect(() => {
     if (!schemaKey) return undefined;
