@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import providersApi from "../../api/providers";
+import galleryApi from "../../api/gallery";
 import { useLoc } from "../context/LocationContext";
 
 import g1 from "../assets/Boulder Creek.jpg";
@@ -65,8 +66,38 @@ function GallerySection() {
   const [animate, setAnimate] = useState(true);
   const [paused, setPaused] = useState(false);
   const [providers, setProviders] = useState([]);
+  const [managed, setManaged] = useState([]);
   const navigate = useNavigate();
   const { location } = useLoc();
+
+  // Admin-curated tiles win: each carries its own image and destination, set
+  // from the dashboard. Providers and the bundled images are fallbacks.
+  useEffect(() => {
+    let active = true;
+    galleryApi
+      .getGallery()
+      .then((res) => {
+        const rows = res?.data?.[0];
+        if (!active || !Array.isArray(rows) || !rows.length) return;
+        setManaged(
+          rows
+            .filter((r) => r.ImageURL)
+            .map((r) => ({
+              src: r.ImageURL,
+              name: r.Title || "Morselv",
+              href: r.LinkURL || null,
+              external: !!r.LinkURL,
+              newTab: !!r.OpenInNewTab,
+            }))
+        );
+      })
+      .catch(() => {
+        /* fall through to providers / bundled images */
+      });
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Prefer real providers so each tile links somewhere useful; the bundled
   // images stay as a fallback when the API has nothing for this location.
@@ -95,15 +126,21 @@ function GallerySection() {
     };
   }, [location]);
 
-  // Always show 16 tiles. Live providers come first (those are clickable);
-  // the bundled images top up the remainder when fewer than 16 are nearby.
+  // Always show 16 tiles. Admin tiles come first, then providers, then the
+  // bundled images top up whatever is left.
   const items = useMemo(() => {
+    if (managed.length >= GALLERY_TARGET) return managed.slice(0, GALLERY_TARGET);
+    if (managed.length) {
+      const used = new Set(managed.map((m) => m.src));
+      const rest = [...providers, ...GALLERY_IMAGES].filter((x) => !used.has(x.src));
+      return [...managed, ...rest].slice(0, GALLERY_TARGET);
+    }
     if (!providers.length) return GALLERY_IMAGES;
     if (providers.length >= GALLERY_TARGET) return providers.slice(0, GALLERY_TARGET);
     const used = new Set(providers.map((p) => p.src));
     const filler = GALLERY_IMAGES.filter((g) => !used.has(g.src));
     return [...providers, ...filler].slice(0, GALLERY_TARGET);
-  }, [providers]);
+  }, [managed, providers]);
 
   const total = items.length;
 
@@ -118,6 +155,18 @@ function GallerySection() {
     () => [...items, ...items.slice(0, perView)],
     [items, perView]
   );
+
+  // Admin tiles point at arbitrary sites, so they open with window.open /
+  // location rather than the router, which only understands in-app paths.
+  const openTile = (image) => {
+    if (!image.href) return;
+    if (image.external) {
+      if (image.newTab) window.open(image.href, "_blank", "noopener,noreferrer");
+      else window.location.assign(image.href);
+      return;
+    }
+    navigate(image.href);
+  };
 
   const reduceMotion =
     typeof window !== "undefined" &&
@@ -190,13 +239,13 @@ function GallerySection() {
                 <div
                   role={image.href ? "link" : undefined}
                   tabIndex={image.href ? 0 : undefined}
-                  onClick={image.href ? () => navigate(image.href) : undefined}
+                  onClick={image.href ? () => openTile(image) : undefined}
                   onKeyDown={
                     image.href
                       ? (e) => {
                           if (e.key === "Enter" || e.key === " ") {
                             e.preventDefault();
-                            navigate(image.href);
+                            openTile(image);
                           }
                         }
                       : undefined
