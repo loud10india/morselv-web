@@ -10,6 +10,7 @@ import Careers from "./components/home/Career";
 import ListYourBusiness from "./components/home/ListYourBusiness";
 import Packages from "./components/home/Packages";
 import CustomerPanel from "./components/home/CustomerPanel";
+import JobOpportunities from "./components/home/JobOpportunities";
 import HelpAndSupport from "./components/home/HelpandSupport";
 import Faq from "./components/home/Faq";
 import PrivacyPolicy from "./components/home/PrivacyPolicy";
@@ -42,6 +43,7 @@ function App() {
             <Route path="ListYourBusiness" element={<ListYourBusiness />} />
             <Route path="packages" element={<Packages />} />
             <Route path="customer-panel" element={<CustomerPanel />} />
+            <Route path="job-opportunities" element={<JobOpportunities />} />
             <Route path="HelpAndSupport" element={<HelpAndSupport />} />
             <Route path="faq" element={<Faq />} />
             <Route path="PrivacyPolicy" element={<PrivacyPolicy />} />

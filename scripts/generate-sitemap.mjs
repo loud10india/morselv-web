@@ -23,6 +23,7 @@ const staticRoutes = [
   { path: "/packages", changefreq: "monthly", priority: "0.8" },
   { path: "/ListYourBusiness", changefreq: "monthly", priority: "0.8" },
   { path: "/customer-panel", changefreq: "monthly", priority: "0.6" },
+  { path: "/job-opportunities", changefreq: "weekly", priority: "0.7" },
   { path: "/Careers", changefreq: "weekly", priority: "0.6" },
   { path: "/AboutUS", changefreq: "monthly", priority: "0.6" },
   { path: "/HelpAndSupport", changefreq: "monthly", priority: "0.5" },

@@ -87,6 +87,7 @@ function ListYourBusinessForm() {
   const [touched, setTouched] = useState({});
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [honeypot, setHoneypot] = useState("");
   const [categories, setCategories] = useState(FALLBACK_CATEGORIES);
 
   useEffect(() => {
@@ -142,6 +143,7 @@ function ListYourBusinessForm() {
     try {
       const selected = categories.find((c) => c.label === values.category);
       await businessEnquiry.addBusinessEnquiry({
+        website: honeypot, // honeypot — server drops the request when filled
         businessName: values.businessName.trim(),
         ownerName: values.ownerName.trim(),
         email: values.email.trim(),
@@ -198,7 +200,7 @@ function ListYourBusinessForm() {
       onSubmit={handleSubmit}
       noValidate
       aria-labelledby="enquiry-heading"
-      className="mx-auto w-full max-w-[760px] rounded-[16px] border border-[#E0E0E0] bg-white p-6 shadow-[0_3px_15px_rgba(0,0,0,0.06)] sm:p-8"
+      className="relative mx-auto w-full max-w-[760px] rounded-[16px] border border-[#E0E0E0] bg-white p-6 shadow-[0_3px_15px_rgba(0,0,0,0.06)] sm:p-8"
     >
       <h2
         id="enquiry-heading"
@@ -209,6 +211,21 @@ function ListYourBusinessForm() {
       <p className="mt-2 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
         Share a few details and our onboarding team will get you listed.
       </p>
+
+
+              {/* Honeypot — hidden from people, irresistible to bots. */}
+              <div aria-hidden="true" className="absolute left-[-9999px] h-0 w-0 overflow-hidden">
+                <label htmlFor="lyb-website">Website</label>
+                <input
+                  id="lyb-website"
+                  name="website"
+                  type="text"
+                  tabIndex={-1}
+                  autoComplete="off"
+                  value={honeypot}
+                  onChange={(e) => setHoneypot(e.target.value)}
+                />
+              </div>
 
       <div className="mt-8 grid grid-cols-1 gap-5 sm:grid-cols-2">
         <Field label="Business Name" htmlFor="businessName" required error={errorFor("businessName")}>

@@ -35,7 +35,7 @@ const SECTIONS = [
     heading: "Explore",
     links: [
       { label: "Packages", to: "/packages" },
-      { label: "New Panel", to: "/Careers" },
+      { label: "Job Opportunities", to: "/job-opportunities" },
       { label: "Customer Panel", to: "/customer-panel" },
       { label: "List Your Business", to: "/ListYourBusiness" },
     ],

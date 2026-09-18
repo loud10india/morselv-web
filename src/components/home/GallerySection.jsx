@@ -1,4 +1,7 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import providersApi from "../../api/providers";
+import { useLoc } from "../context/LocationContext";
 
 import g1 from "../assets/Boulder Creek.jpg";
 import g2 from "../assets/Cactus Bloom.jpg";
@@ -38,7 +41,14 @@ const GALLERY_IMAGES = [
   { src: g16, name: "The Rusty Spur Salon" },
 ];
 
-const SLIDE_MS = 2600;
+const SLIDE_MS = 1000;
+const GALLERY_TARGET = 16;
+
+const toSlug = (str = "") =>
+  str
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)+/g, "");
 
 // 4 per row on desktop, 3 on tablet, 2 on mobile.
 const visibleForWidth = (width) => {
@@ -54,7 +64,48 @@ function GallerySection() {
   const [index, setIndex] = useState(0);
   const [animate, setAnimate] = useState(true);
   const [paused, setPaused] = useState(false);
-  const total = GALLERY_IMAGES.length;
+  const [providers, setProviders] = useState([]);
+  const navigate = useNavigate();
+  const { location } = useLoc();
+
+  // Prefer real providers so each tile links somewhere useful; the bundled
+  // images stay as a fallback when the API has nothing for this location.
+  useEffect(() => {
+    if (!location?.lat || !location?.lng) return;
+    let active = true;
+    providersApi
+      .getNearbyProviders(location)
+      .then((res) => {
+        const rows = Array.isArray(res?.data) ? res.data : [];
+        const mapped = rows
+          .filter((x) => x.imageURL && x.providerName)
+          .slice(0, 16)
+          .map((x) => ({
+            src: x.imageURL,
+            name: x.providerName,
+            href: `/provider/${toSlug(x.providerName)}/${x.ID}`,
+          }));
+        if (active && mapped.length >= 4) setProviders(mapped);
+      })
+      .catch(() => {
+        /* keep the bundled set */
+      });
+    return () => {
+      active = false;
+    };
+  }, [location]);
+
+  // Always show 16 tiles. Live providers come first (those are clickable);
+  // the bundled images top up the remainder when fewer than 16 are nearby.
+  const items = useMemo(() => {
+    if (!providers.length) return GALLERY_IMAGES;
+    if (providers.length >= GALLERY_TARGET) return providers.slice(0, GALLERY_TARGET);
+    const used = new Set(providers.map((p) => p.src));
+    const filler = GALLERY_IMAGES.filter((g) => !used.has(g.src));
+    return [...providers, ...filler].slice(0, GALLERY_TARGET);
+  }, [providers]);
+
+  const total = items.length;
 
   useEffect(() => {
     const onResize = () => setPerView(visibleForWidth(window.innerWidth));
@@ -64,8 +115,8 @@ function GallerySection() {
 
   // Clone the leading slides onto the end so the last step wraps without a jump.
   const slides = useMemo(
-    () => [...GALLERY_IMAGES, ...GALLERY_IMAGES.slice(0, perView)],
-    [perView]
+    () => [...items, ...items.slice(0, perView)],
+    [items, perView]
   );
 
   const reduceMotion =
@@ -84,7 +135,7 @@ function GallerySection() {
     const t = setTimeout(() => {
       setAnimate(false);
       setIndex(0);
-    }, 700);
+    }, 620);
     return () => clearTimeout(t);
   }, [index, total]);
 
@@ -126,7 +177,7 @@ function GallerySection() {
             className="flex list-none p-0 m-0"
             style={{
               transform: `translateX(-${index * (100 / perView)}%)`,
-              transition: animate ? "transform 700ms ease-in-out" : "none",
+              transition: animate ? "transform 600ms ease-in-out" : "none",
             }}
           >
             {slides.map((image, i) => (
@@ -136,15 +187,38 @@ function GallerySection() {
                 style={{ width: `${100 / perView}%` }}
                 aria-hidden={i >= total ? "true" : undefined}
               >
-                <div className="overflow-hidden rounded-2xl shadow-[0_3px_15px_rgba(0,0,0,0.10)] bg-white">
+                <div
+                  role={image.href ? "link" : undefined}
+                  tabIndex={image.href ? 0 : undefined}
+                  onClick={image.href ? () => navigate(image.href) : undefined}
+                  onKeyDown={
+                    image.href
+                      ? (e) => {
+                          if (e.key === "Enter" || e.key === " ") {
+                            e.preventDefault();
+                            navigate(image.href);
+                          }
+                        }
+                      : undefined
+                  }
+                  className={`group overflow-hidden rounded-2xl bg-white shadow-[0_3px_15px_rgba(0,0,0,0.10)] ${
+                    image.href
+                      ? "cursor-pointer transition hover:shadow-[0_6px_22px_rgba(0,0,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DE9636]"
+                      : ""
+                  }`}
+                >
                   <img
                     src={image.src}
-                    alt={`${image.name} — partner business on Morselv`}
+                    alt={
+                      image.href
+                        ? `${image.name} — view this provider on Morselv`
+                        : `${image.name} — partner business on Morselv`
+                    }
                     loading="lazy"
                     decoding="async"
                     width="540"
                     height="360"
-                    className="w-full h-[150px] sm:h-[190px] lg:h-[230px] object-cover"
+                    className="w-full h-[150px] sm:h-[190px] lg:h-[230px] object-cover transition duration-300 group-hover:scale-[1.04]"
                   />
                 </div>
               </li>
