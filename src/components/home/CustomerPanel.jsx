@@ -177,13 +177,24 @@ function CustomerPanel() {
               </div>
 
               <div className="mt-7 flex flex-col gap-5">
-                <Field id="name" value={values.name} error={errors.name} onChange={setField("name")} label="Name" autoComplete="name" placeholder="Your full name" />
+                <Field
+                  id="name"
+                  label="Name"
+                  autoComplete="name"
+                  placeholder="Your full name"
+                  value={values.name}
+                  error={errors.name}
+                  onChange={setField("name")}
+                />
                 <Field
                   id="email"
                   label="Email Address"
                   type="email"
                   autoComplete="email"
                   placeholder="you@example.com"
+                  value={values.email}
+                  error={errors.email}
+                  onChange={setField("email")}
                 />
                 <Field
                   id="phone"
@@ -193,6 +204,9 @@ function CustomerPanel() {
                   autoComplete="tel"
                   maxLength={15}
                   placeholder="10-digit mobile number"
+                  value={values.phone}
+                  error={errors.phone}
+                  onChange={setField("phone")}
                 />
               </div>
 
