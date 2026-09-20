@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Seo from "../utils/Seo";
 import customer from "../../api/customer";
@@ -26,11 +26,16 @@ const errorMessage = (error, fallback) =>
  * it a fresh component type on every render, so React unmounts the input and
  * the field loses focus after each keystroke.
  */
-function Field({ id, label, type = "text", placeholder, autoComplete, maxLength, inputMode, value, error, onChange }) {
+function Field({ id, label, type = "text", placeholder, autoComplete, maxLength, inputMode, value, error, onChange, required = true }) {
   return (
     <div className="flex flex-col gap-2">
       <label htmlFor={id} className="font-montserrat text-[14px] font-medium text-[#2D2D2D]">
-        {label} <span className="text-[#C0392B]">*</span>
+        {label}{" "}
+        {required ? (
+          <span className="text-[#C0392B]">*</span>
+        ) : (
+          <span className="font-normal text-[#9A9A9A]">(optional)</span>
+        )}
       </label>
       <input
         id={id}
@@ -59,22 +64,27 @@ function CustomerPanel() {
   const [errors, setErrors] = useState({});
   const [busy, setBusy] = useState(false);
   const [registered, setRegistered] = useState(false);
+  const [showPopup, setShowPopup] = useState(false);
 
   const setField = (name) => (event) => {
     setValues((prev) => ({ ...prev, [name]: event.target.value }));
     setErrors((prev) => ({ ...prev, [name]: undefined }));
   };
 
+  // Permissive on purpose: capture the registration rather than block it.
+  // Only a name plus one contact method is required.
   const validate = () => {
     const found = {};
-    if (!values.name.trim()) found.name = "Name is required";
-    if (!values.email.trim()) found.email = "Email address is required";
-    else if (!EMAIL_RE.test(values.email.trim()))
-      found.email = "Please enter a valid email address";
-
+    const email = values.email.trim();
     const digits = values.phone.replace(/\D/g, "");
-    if (!digits) found.phone = "Phone number is required";
-    else if (digits.length !== 10) found.phone = "Enter a 10-digit phone number";
+
+    if (!values.name.trim()) found.name = "Please tell us your name";
+    if (!email && !digits) {
+      found.email = "Enter an email address or a phone number";
+    }
+    if (email && !EMAIL_RE.test(email)) found.email = "That email address doesn't look right";
+    if (digits && (digits.length < 7 || digits.length > 15))
+      found.phone = "That phone number doesn't look right";
 
     setErrors(found);
     return Object.keys(found).length === 0;
@@ -93,6 +103,7 @@ function CustomerPanel() {
         phone: values.phone.replace(/\D/g, ""),
       });
       setRegistered(true);
+      setShowPopup(true);
       toast.success("You're registered with Morselv.");
     } catch (error) {
       toast.error(
@@ -103,8 +114,58 @@ function CustomerPanel() {
     }
   };
 
+  // Confirmation dialog after a successful registration.
+  useEffect(() => {
+    if (!showPopup) return undefined;
+    const onKey = (e) => e.key === "Escape" && setShowPopup(false);
+    document.addEventListener("keydown", onKey);
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.removeEventListener("keydown", onKey);
+      document.body.style.overflow = "";
+    };
+  }, [showPopup]);
+
   return (
     <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
+      {showPopup && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="reg-popup-title"
+          className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 px-4"
+          onClick={() => setShowPopup(false)}
+        >
+          <div
+            className="w-full max-w-[420px] rounded-[18px] bg-white p-8 text-center shadow-[0_20px_60px_rgba(0,0,0,0.25)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full bg-[#FFF4E3]">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none"
+                stroke="#DE9636" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round"
+                aria-hidden="true" focusable="false">
+                <path d="M20 6 9 17l-5-5" />
+              </svg>
+            </div>
+            <h2 id="reg-popup-title" className="mt-5 font-inter text-[24px] font-semibold text-[#121212]">
+              Registration successful
+            </h2>
+            <p className="mt-3 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
+              Thanks {values.name.trim().split(" ")[0] || "for registering"} — your
+              details are with Morselv. We&rsquo;ll keep you posted on deals and
+              new providers near you.
+            </p>
+            <button
+              type="button"
+              autoFocus
+              onClick={() => setShowPopup(false)}
+              className="mt-7 inline-flex h-[50px] w-full items-center justify-center rounded-[10px] bg-[#121212] font-montserrat text-[16px] font-medium text-white transition-colors hover:bg-[#333]"
+            >
+              Done
+            </button>
+          </div>
+        </div>
+      )}
       <Seo
         title="Customer Panel"
         path="/customer-panel"
@@ -159,7 +220,8 @@ function CustomerPanel() {
                 Your details
               </h2>
               <p className="mt-2 font-montserrat text-[15px] leading-[24px] text-[#5D5D5D]">
-                Takes a few seconds. No password needed.
+                Takes a few seconds. No password needed — just your name and a
+                way to reach you.
               </p>
 
               {/* Honeypot — hidden from people, irresistible to bots. */}
@@ -192,6 +254,7 @@ function CustomerPanel() {
                   type="email"
                   autoComplete="email"
                   placeholder="you@example.com"
+                  required={false}
                   value={values.email}
                   error={errors.email}
                   onChange={setField("email")}
@@ -203,7 +266,8 @@ function CustomerPanel() {
                   inputMode="numeric"
                   autoComplete="tel"
                   maxLength={15}
-                  placeholder="10-digit mobile number"
+                  placeholder="Mobile number"
+                  required={false}
                   value={values.phone}
                   error={errors.phone}
                   onChange={setField("phone")}
