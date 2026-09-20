@@ -33,7 +33,7 @@ function HelpAndSupport() {
             Need assistance? <br />
             We’re here to
             <span className="relative inline-block">
-              <span className="relative z-10 md:ml-2">help.</span>
+              <span className="relative z-10 ml-1 md:ml-2">help.</span>
               <svg
                 xmlns="http://www.w3.org/2000/svg"
                 viewBox="0 0 163 28"
