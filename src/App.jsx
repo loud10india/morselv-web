@@ -17,6 +17,7 @@ import PrivacyPolicy from "./components/home/PrivacyPolicy";
 import TermsAndConditions from "./components/home/TermsandConditions";
 import DealDetail from "./components/deals/DealDetail";
 import ServiceListing from "./components/service/ServiceListing";
+import NotFound from "./components/utils/NotFound";
 import ServiceDetail from "./components/service/ServiceDetail";
 import Layout from "./components/utils/Layout";
 import ScrollToTop from "./components/ScrollToTop";
@@ -58,6 +59,8 @@ function App() {
               path="provider/:slug/:providerID"
               element={<ServiceDetail />}
             />
+            {/* Catch-all: an unmatched path used to render nothing at all. */}
+            <Route path="*" element={<NotFound />} />
           </Route>
         </Routes>
       </Router>

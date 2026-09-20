@@ -1,4 +1,5 @@
 import React from "react";
+import { imageSrc, onImageError } from "../../utils/imageFallback";
 import { MapPin } from "lucide-react";
 function DealCard({ image, subCatName, dealName, providerName, city, area }) {
   return (
@@ -14,7 +15,8 @@ function DealCard({ image, subCatName, dealName, providerName, city, area }) {
       {/* Image */}
       <div className="w-full aspect-square overflow-hidden rounded-t-[16.71px]">
         <img
-          src={image}
+          src={imageSrc(image)}
+                        onError={onImageError}
           alt={dealName}
           className="w-full h-full object-cover"
         />

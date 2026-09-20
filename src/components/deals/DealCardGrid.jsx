@@ -1,4 +1,5 @@
 import React from "react";
+import { imageSrc, onImageError } from "../../utils/imageFallback";
 import locationIcon from "../assets/mdi_location.svg";
 import { Link, useNavigate } from "react-router-dom";
 
@@ -187,7 +188,8 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
               <div className="relative bg-white p-2">
                 <div className="relative" style={{ paddingBottom: "100%" }}>
                   <img
-                    src={deal.image}
+                    src={imageSrc(deal.image)}
+                        onError={onImageError}
                     alt={deal.dealName}
                     className="absolute top-0 left-0 w-full h-full object-cover border border-gray-200"
                     style={{

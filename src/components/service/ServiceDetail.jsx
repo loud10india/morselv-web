@@ -3,7 +3,7 @@ import PartnerSection from "../home/PartnerSection";
 import HeaderSectionService from "../service/HeaderSecionService";
 import AboutBusinessSection from "./AboutBussiness";
 import ServicePopup from "./ServiceDetailPopup";
-import { useParams, useLocation } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import providers from "../../api/providers";
 import Seo from "../utils/Seo";
 import { localBusinessSchema } from "../../seo/siteConfig";
@@ -16,6 +16,7 @@ const ServiceDetail = () => {
   const [serviceDataset, setServiceDataset] = useState([]);
   const [imagesDataset, setImagesDataset] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  const [status, setStatus] = useState("loading");
   
   const openPopup = (ID) => {
     setSelectedServiceID(ID);
@@ -27,15 +28,67 @@ const ServiceDetail = () => {
   };
   
   useEffect(() => {
-    if (providerID) {
-      providers.getProviderDetails({ providerID }).then((res) => {
-        setDataset(res.data[0][0]);
-        setServiceDataset(res.data[1]);
-        setImagesDataset(res.data[2]);
+    if (!providerID) return;
+    let active = true;
+    setStatus("loading");
+    providers
+      .getProviderDetails({ providerID })
+      .then((res) => {
+        if (!active) return;
+        // getProviderByID returns an empty first result set for a provider that
+        // is not publicly visible. Reading [0][0] blindly set state to
+        // undefined and the render then threw on dataSet.Name, blanking the
+        // page. Treat "no row" as not-found instead.
+        const provider = res?.data?.[0]?.[0];
+        if (!provider) {
+          setStatus("missing");
+          return;
+        }
+        setDataset(provider);
+        setServiceDataset(res.data[1] ?? []);
+        setImagesDataset(res.data[2] ?? []);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (active) setStatus("missing");
       });
-    }
+    return () => {
+      active = false;
+    };
   }, [providerID]);
   
+  if (status === "missing") {
+    return (
+      <div className="flex mx-auto flex-col w-full">
+        <Seo
+          title="Provider not available"
+          description="This Morselv listing is no longer available."
+          noindex
+        />
+        <div className="max-w-[720px] mx-auto px-4 py-20 text-center">
+          <h1 className="text-[#2D2D2D] font-montserrat font-semibold text-[26px] sm:text-[32px]">
+            This listing is no longer available
+          </h1>
+          <p className="text-[#4D4D4D] font-montserrat text-[14px] sm:text-[16px] mt-4">
+            The business you are looking for has been removed or is not
+            currently listed on Morselv.
+          </p>
+          <Link
+            to="/"
+            className="inline-block mt-8 rounded-[10px] bg-[#2D2D2D] text-white font-montserrat font-semibold text-[14px] px-8 py-3 hover:opacity-90 transition"
+          >
+            Browse services
+          </Link>
+        </div>
+        <div className="w-full bg-[#fbfbfb]">
+          <div className="max-w-[1450px] mx-auto">
+            <PartnerSection />
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex mx-auto flex-col w-full">
       <Seo
@@ -94,7 +147,7 @@ const ServiceDetail = () => {
                         BOOK NOW
                       </button>
                     </div>
-                    {idx < 3 && serviceDataset[idx + 1].Name != "" && (
+                    {idx < 3 && serviceDataset[idx + 1]?.Name && (
                       <div className="w-full h-px bg-white my-[38px]"></div>
                     )}
                   </div>
@@ -134,7 +187,7 @@ const ServiceDetail = () => {
                         BOOK NOW
                       </button>
                     </div>
-                    {idx < 3 && serviceDataset[idx + 1].Name != "" && (
+                    {idx < 3 && serviceDataset[idx + 1]?.Name && (
                       <div className="w-full h-px white my-[35px]"></div>
                     )}
                   </div>
@@ -169,7 +222,7 @@ const ServiceDetail = () => {
                         BOOK NOW
                       </button>
                     </div>
-                    {idx < 3 && serviceDataset[idx + 1].Name != "" && (
+                    {idx < 3 && serviceDataset[idx + 1]?.Name && (
                       <div className="h-px bg-white my-[30px]"></div>
                     )}
                   </div>
@@ -201,7 +254,7 @@ const ServiceDetail = () => {
                     >
                       BOOK NOW
                     </button>
-                    {idx < 3 && serviceDataset[idx + 1].Name != "" && (
+                    {idx < 3 && serviceDataset[idx + 1]?.Name && (
                       <div className="h-px my-2 bg-white"></div>
                     )}
                   </div>

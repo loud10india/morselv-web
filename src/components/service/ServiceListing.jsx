@@ -268,6 +268,12 @@ function ServiceListing() {
     if (parts[1] && selectedCategory.ID == 0) {
       return;
     }
+    // A URL like /service/skin-hair-beauty (no leading numeric ID) parses to
+    // NaN, which used to reach MySQL as "NaN" and come back a 500. Treat it as
+    // no category filter rather than sending a request that cannot succeed.
+    if (!Number.isFinite(Number(selectedCategory.ID))) {
+      return;
+    }
     if (location.lat && location.lng) {
       // if(isUrlCatRef.current)
       //  let param = {
@@ -279,7 +285,9 @@ function ServiceListing() {
       // };
       let param = {
         category: selectedCategory.ID,
-        subCategory: selectedSubCategory?.ID,
+        subCategory: Number.isFinite(Number(selectedSubCategory?.ID))
+          ? selectedSubCategory.ID
+          : 0,
         location: { ...location },
         distanceMin: selectedDistance.min,
         distanceMax: selectedDistance.max,

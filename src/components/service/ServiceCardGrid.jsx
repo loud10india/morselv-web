@@ -1,4 +1,5 @@
 import React from "react";
+import { imageSrc, onImageError } from "../../utils/imageFallback";
 import { useNavigate } from "react-router-dom";
 
 const toSlug = (str) =>
@@ -93,7 +94,8 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   <div className="p-2 sm:p-3 lg:p-4">
                     <div className="relative w-full overflow-hidden rounded-[10px] sm:rounded-[14px] border border-gray-200 bg-[#F4F4F4] aspect-square">
                       <img
-                        src={provider.image}
+                        src={imageSrc(provider.image)}
+                        onError={onImageError}
                         alt={provider.providerName}
                         loading="lazy"
                         decoding="async"

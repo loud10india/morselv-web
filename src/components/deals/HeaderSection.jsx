@@ -102,6 +102,7 @@ const HeaderSection = () => {
             <img
               className="w-[10px] md:w-[13px] h-[18px] md:h-[25px] ml-2 opacity-100"
               src={img}
+              alt=""
             ></img>
           </button>
         </div>
@@ -164,7 +165,7 @@ const HeaderSection = () => {
             className="flex flex-row items-center justify-center bg-[#121212] text-white text-[14px] px-5 py-2 rounded-md mb-6"
           >
             GET THIS DEAL{" "}
-            <img className="w-[12px] h-[20px] ml-2 opacity-100" src={img}></img>
+            <img className="w-[12px] h-[20px] ml-2 opacity-100" src={img} alt=""></img>
           </button>
           {/* <h2 className="text-black font-inter font-semibold text-lg mb-1">Highlights</h2>
           <p className="text-[#4D4D4D] font-montserrat text-sm mb-6">
