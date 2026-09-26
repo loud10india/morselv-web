@@ -158,8 +158,25 @@ function ServiceListing() {
         selectedCategory.Name !== newCategory.Name
       ) {
         setSelectedCategory(newCategory);
-        setSelectedSubCategory({ ID: 0, Name: "" }); // reset subcategory
+        // The sub-category is decided by the URL alone (below). This used to
+        // reset it whenever the category's label changed — including when the
+        // real label replaced the one guessed from the slug — and if the
+        // sub-category list had already loaded nothing restored it, so
+        // /service/14-…/11-salon quietly became /service/14-….
       }
+    }
+
+    // No category segment (the "Services" crumb, or "Discover services" in the
+    // header): this component stays mounted across these URLs, so clear the
+    // category explicitly or the URL sync below would put it back.
+    if (!parts[1] && selectedCategory.ID) {
+      setSelectedCategory({ ID: 0, Name: "" });
+    }
+
+    // No sub-category segment in the URL (e.g. the category crumb was
+    // clicked): clear any sub-category still selected.
+    if (!parts[2] && selectedSubCategory.ID) {
+      setSelectedSubCategory({ ID: 0, Name: "" });
     }
 
     // Parse subcategory
