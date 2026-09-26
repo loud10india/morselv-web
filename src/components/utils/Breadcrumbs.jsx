@@ -30,7 +30,9 @@ function Breadcrumbs({ items = [], className = "" }) {
               ) : (
                 <Link
                   to={crumb.path}
-                  className="whitespace-nowrap hover:text-[#DE9636] hover:underline underline-offset-2"
+                  // py-0.5 makes each link a 24px-tall target (WCAG 2.5.8)
+                  // without changing the line's look.
+                  className="inline-block py-0.5 whitespace-nowrap hover:text-[#DE9636] hover:underline underline-offset-2"
                 >
                   {crumb.name}
                 </Link>
