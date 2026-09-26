@@ -1,16 +1,12 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import providers from "../../api/providers";
+import { DEFAULT_LOCATION } from "../../seo/core.js";
 
 const LocationContext = createContext();
 
 export const LocationProvider = ({ children }) => {
-  const [location, setLocation] = useState({
-    city: "New Delhi",
-    state: "Delhi",
-    country: "India",
-    lat: 28.613939,
-    lng: 77.209021,
-  });
+  // Shared with the build-time pre-render, which must sort listings the same way.
+  const [location, setLocation] = useState(DEFAULT_LOCATION);
   const [noservice, setNoservice] = useState(false);
 
   const isServicable = async (city) => {

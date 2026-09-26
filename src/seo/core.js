@@ -27,6 +27,25 @@ export const LOGO_PATH = "/favicon.png";
 // the sitemap.
 export const MIN_LISTING_ITEMS = 3;
 
+// Where "near you" listings are measured from until the visitor shares a
+// location. The listing API sorts by distance from it, so the pre-render has to
+// use the same point to produce the same order as the page.
+export const DEFAULT_LOCATION = {
+  city: "New Delhi",
+  state: "Delhi",
+  country: "India",
+  lat: 28.613939,
+  lng: 77.209021,
+};
+
+/**
+ * Identifies an unfiltered provider-listing request. The pre-rendered page
+ * starts this request before the app loads (see scripts/prerender.mjs); the
+ * listing uses that result when its own first request has the same key.
+ */
+export const listingPrefetchKey = (category, subCategory, location = DEFAULT_LOCATION) =>
+  `provider:${Number(category) || 0}:${Number(subCategory) || 0}:${location?.lat}:${location?.lng}`;
+
 export const ORGANIZATION = {
   legalName: "Femtech Sphere Tech Pvt. Ltd.",
   telephone: "+91-9818257300",
@@ -133,6 +152,8 @@ export const organizationSchema = (siteUrl = DEFAULT_SITE_URL) => ({
       "@id": `${siteUrl}/#website`,
       url: `${siteUrl}/`,
       name: SITE_NAME,
+      // How the brand is written in the logo and on the About page.
+      alternateName: "Mor-Selv",
       inLanguage: "en-IN",
       publisher: { "@id": `${siteUrl}/#organization` },
     },
@@ -420,7 +441,7 @@ export const providerMeta = (
   ].filter(Boolean);
 
   const business = localBusinessSchema(provider, { services, images, siteUrl });
-  const image = images.map((i) => i?.url).find(Boolean);
+  const image = ogImageUrl(images.map((i) => i?.url).find(Boolean));
 
   // Lead with what and where: it is what a searcher scans for, and it keeps
   // the descriptions distinct when one business lists the same text under
@@ -471,7 +492,7 @@ export const dealMeta = (deal, dealID, { siteUrl = DEFAULT_SITE_URL } = {}) => {
         `${provider ? `Offered by ${provider}. ` : ""}Enquire about this deal on Morselv.`
       )
     ),
-    image: deal.ImageName || undefined,
+    image: ogImageUrl(deal.ImageName) || undefined,
     imageAlt: provider ? `${name} at ${provider}` : name,
     h1: name,
     crumbs,
@@ -546,9 +567,14 @@ export const listingMeta = ({
     path,
     title,
     description: truncate(description),
-    // Thin filtered listings stay out of the index; the unfiltered root
-    // listings always stay in.
-    noindex: Boolean(cat) && known && count < MIN_LISTING_ITEMS,
+    // Provider listings: a category or sub-category is a landing page unless
+    // it is thin. Deals listings: category filters are not landing pages —
+    // with ~65 deals in all, the largest filter repeats 88% of /deals and the
+    // rest hold a handful — so only /deals itself is indexed. Every filter
+    // page stays reachable (follow), and every deal keeps its own page.
+    noindex: isDeals
+      ? Boolean(cat)
+      : Boolean(cat) && known && count < MIN_LISTING_ITEMS,
     crumbs,
     schema: breadcrumbSchema(crumbs, siteUrl),
   };
@@ -599,3 +625,14 @@ export const cloudinarySrcSet = (url, widths = [300, 400, 600]) =>
 // 4 from lg, inside the 1280px container.
 export const CARD_SIZES =
   "(min-width: 1280px) 300px, (min-width: 1024px) 23vw, (min-width: 768px) 30vw, 46vw";
+
+/**
+ * Image for Open Graph / Twitter cards: at most 1200px wide in its original
+ * format (some link-preview bots do not accept WebP or AVIF, so no f_auto).
+ * Uploads can be several megabytes, which preview bots may time out on.
+ */
+export const ogImageUrl = (url) => {
+  if (typeof url !== "string" || !url.includes("res.cloudinary.com/")) return url;
+  if (!url.includes("/image/upload/") || TRANSFORM_SEGMENT.test(url)) return url;
+  return url.replace("/image/upload/", "/image/upload/q_auto,c_limit,w_1200/");
+};

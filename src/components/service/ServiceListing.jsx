@@ -12,6 +12,8 @@ import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
 import { listingMeta, toSlug } from "../../seo/siteConfig";
+import { listingPrefetchKey } from "../../seo/core.js";
+import { takePrefetch } from "../../utils/prefetch";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 
 // Distance filter options
@@ -318,7 +320,16 @@ function ServiceListing() {
       // console.log(selectedSubCategory?.ID);
       let active = true;
       setResultsLoaded(false);
-      providers.getProvidersByFilter(param).then((res) => {
+      // The pre-rendered page may already have this exact request in flight
+      // (see utils/prefetch.js); use it, or fall back to a normal request.
+      const early =
+        selectedDistance.min === undefined && selectedDistance.max === undefined
+          ? takePrefetch(listingPrefetchKey(param.category, param.subCategory, location))
+          : null;
+      const request = early
+        ? early.catch(() => providers.getProvidersByFilter(param))
+        : providers.getProvidersByFilter(param);
+      request.then((res) => {
         if (!active) return;
         setResultsLoaded(true);
         if (res.data?.length) {

@@ -20,10 +20,13 @@
  * cannot be reached the build still succeeds with the fixed pages only, and
  * catalogue URLs keep working through the client-side app (dist/spa.html).
  */
+import { createHash } from "node:crypto";
 import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
+  CARD_SIZES,
+  DEFAULT_LOCATION,
   DEFAULT_OG_IMAGE_PATH,
   DEFAULT_SITE_URL,
   DEFAULT_TITLE,
@@ -33,11 +36,13 @@ import {
   IMAGE_WIDTH,
   absoluteUrl,
   cleanText,
+  cloudinarySrcSet,
   cloudinaryUrl,
   dealMeta,
   dealPath,
   listingMeta,
   listingPath,
+  listingPrefetchKey,
   providerMeta,
   providerPath,
   relatedByOrder,
@@ -49,6 +54,13 @@ const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const DIST = join(ROOT, "dist");
 const SITE_URL = (process.env.VITE_SITE_URL || DEFAULT_SITE_URL).replace(/\/$/, "");
 const API = (process.env.VITE_API_URL || "").replace(/\/$/, "");
+// Strict when building against the real (https) API, i.e. on App Platform and
+// in the scheduled refresh: an incomplete catalogue fails the build, so App
+// Platform keeps serving the previous complete deployment rather than
+// publishing one with pages missing from the site and the sitemap.
+// Local builds against http://localhost fall back to the fixed pages.
+const STRICT = /^https:\/\//.test(API) && process.env.PRERENDER_OPTIONAL !== "1";
+const MAX_DETAIL_FAILURE_SHARE = 0.02;
 const CONCURRENCY = 8;
 const TIMEOUT_MS = 20_000;
 
@@ -160,11 +172,15 @@ function render(meta, main) {
 
 const pages = []; // { path, html, indexable, lastmod, group }
 
-function addPage(meta, main, { group, lastmod } = {}) {
+function addPage(meta, main, { group, lastmod, sitemap = true } = {}) {
   pages.push({
     path: meta.path,
     html: render(meta, main),
+    // Data-derived only (no asset names), so a code-only deploy leaves the
+    // fingerprint unchanged.
+    source: `${headFor(meta)}\n${main || ""}`,
     indexable: !meta.noindex,
+    sitemap,
     lastmod,
     group,
   });
@@ -241,7 +257,43 @@ const dealLine = (r) =>
     r.providerName ? ` — ${esc(r.providerName)}` : ""
   }${cleanText(r.city) ? `, ${esc(r.city)}` : ""}`;
 
-function listingPage({ base, category, subCategory, items, subs }) {
+// Provider listings: start the listing request from the HTML (the app picks
+// it up, see src/utils/prefetch.js) and preload the first row of photos. On a
+// slow connection the request otherwise waited for the whole JS bundle, and the
+// photos for the request. Only the first row: preloading more competes with
+// the bundle the page needs in order to render at all.
+// Four: the first row on desktop, the first two rows on a phone. The LCP
+// element on a phone is often the third card, not the first.
+const FIRST_ROW = 4;
+function listingHead({ category, subCategory, items }) {
+  const params = new URLSearchParams({
+    category: String(category?.ID || 0),
+    subCategory: String(subCategory?.ID || 0),
+    "location[city]": DEFAULT_LOCATION.city,
+    "location[state]": DEFAULT_LOCATION.state,
+    "location[country]": DEFAULT_LOCATION.country,
+    "location[lat]": String(DEFAULT_LOCATION.lat),
+    "location[lng]": String(DEFAULT_LOCATION.lng),
+  });
+  const key = listingPrefetchKey(category?.ID, subCategory?.ID);
+  const url = `${API}/api/provider/filter?${params}`;
+  const script =
+    `<script>(function(){var p=fetch(${JSON.stringify(url)}).then(function(r){if(!r.ok)throw r.status;return r.json()});` +
+    `p.catch(function(){});window.__MORSELV_PREFETCH__={key:${JSON.stringify(key)},promise:p};})();</script>`;
+  const images = items
+    .map((r) => r.imageURL)
+    .filter(Boolean)
+    .slice(0, FIRST_ROW)
+    .map(
+      (u) =>
+        `<link rel="preload" as="image" href="${esc(cloudinaryUrl(u, IMAGE_WIDTH.card))}" imagesrcset="${esc(
+          cloudinarySrcSet(u)
+        )}" imagesizes="${esc(CARD_SIZES)}" fetchpriority="high" />`
+    );
+  return [script, ...images];
+}
+
+function listingPage({ base, category, subCategory, items, subs, sitemap = true }) {
   const isDeals = base === "deals";
   const meta = listingMeta({
     base,
@@ -265,7 +317,8 @@ function listingPage({ base, category, subCategory, items, subs }) {
   main += `<h2>${items.length} ${noun}${items.length === 1 ? "" : "s"}${
     scope ? ` in ${esc(scope)}` : ""
   }</h2>${list(items.map(isDeals ? dealLine : providerLine))}`;
-  addPage(meta, main, { group: "listings" });
+  if (!isDeals) meta.preload = listingHead({ category, subCategory, items });
+  addPage(meta, main, { group: "listings", sitemap });
   return meta;
 }
 
@@ -339,7 +392,7 @@ async function writeSitemaps() {
   const groups = ["pages", "listings", "providers", "deals"];
   const files = [];
   for (const group of groups) {
-    const entries = pages.filter((p) => p.group === group && p.indexable);
+    const entries = pages.filter((p) => p.group === group && p.indexable && p.sitemap);
     if (!entries.length) continue;
     const file = `sitemap-${group}.xml`;
     await writeFile(join(DIST, file), urlset(entries));
@@ -415,6 +468,7 @@ async function main() {
         await Promise.all([getJSON("/category"), getJSON("/subCategory")])
       ).map((d) => rows(d?.[0] ?? d));
     } catch (err) {
+      if (STRICT) throw new Error(`catalogue unavailable: ${err.message}`);
       catalogue = false;
       log("catalogue unavailable, fixed pages only:", err.message);
     }
@@ -438,11 +492,28 @@ async function main() {
         .map((s) => ({ c: categories.find((c) => c.ID === s.CatID), s }))
         .filter((x) => x.c),
     ];
-    const filterQuery = ({ c, s }) => `category=${c ? c.ID : 0}&subCategory=${s ? s.ID : 0}`;
+    const loc = new URLSearchParams({
+      "location[lat]": String(DEFAULT_LOCATION.lat),
+      "location[lng]": String(DEFAULT_LOCATION.lng),
+    });
+    const filterQuery = ({ c, s }) => `category=${c ? c.ID : 0}&subCategory=${s ? s.ID : 0}&${loc}`;
     const [providerSets, dealSets] = await Promise.all([
       mapLimit(combos, (x) => getJSON(`/provider/filter?${filterQuery(x)}`)),
       mapLimit(combos, (x) => getJSON(`/deals/filter?${filterQuery(x)}`)),
     ]);
+    const missingListings =
+      providerSets.filter((x) => x === undefined).length + dealSets.filter((x) => x === undefined).length;
+    if (missingListings && STRICT) {
+      throw new Error(`${missingListings} listing request(s) failed after retries`);
+    }
+    // A sub-category whose results are exactly its category's (the category's
+    // only populated sub-category) duplicates the category page: keep it
+    // reachable and indexable, but list only the category in the sitemap.
+    const idsOf = (set) => rows(set).map((r) => r.ID).sort((a, b) => a - b).join(",");
+    const categoryIds = new Map();
+    combos.forEach((x, i) => {
+      if (x.c && !x.s) categoryIds.set(x.c.ID, idsOf(providerSets[i]));
+    });
 
     const siblingsBySub = new Map();
     combos.forEach((x, i) => {
@@ -465,7 +536,16 @@ async function main() {
       const category = x.c ? cat(x.c) : null;
       const subCategory = x.s ? { ID: x.s.ID, Name: x.s.SubCatName } : null;
       if (providerSets[i] !== undefined) {
-        listingPage({ base: "service", category, subCategory, items: providersHere, subs });
+        const sameAsCategory =
+          Boolean(x.s) && providersHere.length > 0 && idsOf(providersHere) === categoryIds.get(x.c.ID);
+        listingPage({
+          base: "service",
+          category,
+          subCategory,
+          items: providersHere,
+          subs,
+          sitemap: !sameAsCategory,
+        });
       }
       if (dealSets[i] !== undefined) {
         listingPage({ base: "deals", category, subCategory, items: dealsHere, subs: dealSubs });
@@ -479,6 +559,10 @@ async function main() {
       const provider = rows(d?.[0])[0];
       return provider ? [provider, rows(d?.[1]), rows(d?.[2])] : undefined;
     });
+    const failedDetails = details.filter((d) => d === undefined).length;
+    if (STRICT && failedDetails > allProviders.length * MAX_DETAIL_FAILURE_SHARE) {
+      throw new Error(`${failedDetails} of ${allProviders.length} provider pages could not be fetched`);
+    }
     for (const d of details.filter(Boolean)) {
       const siblings = siblingsBySub.get(`${d[0].catID}:${d[0].SubCategoryID}`) || [];
       providerPage(d, siblings);
@@ -490,6 +574,10 @@ async function main() {
       const d = rows(await getJSON(`/deals/id?dealID=${r.ID}`))[0];
       return d ? [d, r.ID] : undefined;
     });
+    const failedDeals = dealDetails.filter((d) => d === undefined).length;
+    if (STRICT && failedDeals > allDeals.length * MAX_DETAIL_FAILURE_SHARE) {
+      throw new Error(`${failedDeals} of ${allDeals.length} deal pages could not be fetched`);
+    }
     for (const d of dealDetails.filter(Boolean)) dealPage(d[0], d[1]);
   }
 
@@ -502,6 +590,19 @@ async function main() {
   }
   const sitemaps = await writeSitemaps();
 
+  // Content fingerprint for the scheduled refresh (.github/workflows/
+  // seo-refresh.yml): it changes when any page's SEO output or sitemap entry
+  // changes, and not for code-only deploys.
+  const fp = createHash("sha256");
+  for (const p of [...pages].sort((a, b) => (a.path < b.path ? -1 : 1))) {
+    fp.update(`${p.path}\n${p.indexable}\n${p.sitemap}\n${p.lastmod || ""}\n${p.source}\n`);
+  }
+  const by2 = (g) => pages.filter((p) => p.group === g).length;
+  await writeFile(
+    join(DIST, "seo-fingerprint.txt"),
+    `${fp.digest("hex")}\nproviders=${by2("providers")} deals=${by2("deals")} listings=${by2("listings")} sitemap=${sitemaps.reduce((n, x) => n + x.count, 0)}\n`
+  );
+
   const by = (g) => pages.filter((p) => p.group === g);
   log(
     `wrote ${pages.length} pages:`,
@@ -513,7 +614,8 @@ async function main() {
 }
 
 main().catch((err) => {
-  // Never fail the deploy over SEO output: the app itself is already built.
-  console.error("[prerender] failed:", err);
-  process.exitCode = 0;
+  console.error("[prerender] failed:", err.message || err);
+  // Strict builds fail, so App Platform keeps the last complete deployment.
+  // Local builds carry on with whatever was written.
+  process.exitCode = STRICT ? 1 : 0;
 });

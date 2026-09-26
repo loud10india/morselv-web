@@ -1,0 +1,90 @@
+# Keeps pre-rendered pages and the sitemap in step with the catalogue.
+#
+# Provider, deal and listing pages are pre-rendered when App Platform builds
+# the site (scripts/prerender.mjs), so a listing added or edited in the admin
+# panel is only pre-rendered and added to the sitemap at the next deploy. This
+# job runs that same build nightly against the live API and compares its
+# content fingerprint with the last published one (seo/catalogue.fingerprint).
+# If public content changed it commits the new fingerprint; the push is what
+# triggers App Platform's normal deploy (deploy_on_push), which rebuilds with
+# fresh data.
+#
+# - No secrets: the API is public, and pushing uses the job's own token.
+# - Nothing is committed when nothing changed, and code-only deploys do not
+#   change the fingerprint.
+# - An incomplete catalogue fails the build (strict mode), so nothing is
+#   committed and the live site keeps its last complete deployment.
+# - Run it by hand from the Actions tab ("Run workflow") after bulk edits.
+name: Refresh pre-rendered catalogue
+
+on:
+  schedule:
+    - cron: "30 20 * * *" # 02:00 IST daily
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths: [".github/workflows/seo-refresh.yml"]
+
+permissions:
+  contents: write # commit the fingerprint
+  actions: write # keep this schedule from being auto-disabled (see last step)
+
+concurrency:
+  group: seo-refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      VITE_API_URL: https://morselv-api-7p9pk.ondigitalocean.app
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build and pre-render against the live API
+        run: npm run build
+
+      - name: Compare with the published fingerprint
+        id: fp
+        run: |
+          new="$(head -n1 dist/seo-fingerprint.txt)"
+          old="$(head -n1 seo/catalogue.fingerprint 2>/dev/null || true)"
+          echo "summary=$(sed -n 2p dist/seo-fingerprint.txt)" >> "$GITHUB_OUTPUT"
+          if [ "$new" = "$old" ]; then
+            echo "changed=false" >> "$GITHUB_OUTPUT"
+            echo "Catalogue unchanged — nothing to publish."
+          else
+            echo "changed=true" >> "$GITHUB_OUTPUT"
+            echo "Catalogue changed: ${old:-none} -> $new"
+          fi
+
+      - name: Publish (triggers the App Platform deploy)
+        if: steps.fp.outputs.changed == 'true'
+        run: |
+          cp dist/seo-fingerprint.txt seo/catalogue.fingerprint
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add seo/catalogue.fingerprint
+          git commit -m "Refresh pre-rendered catalogue (${{ steps.fp.outputs.summary }})"
+          for attempt in 1 2 3; do
+            git pull --rebase --quiet origin main && git push origin HEAD:main && exit 0
+            sleep 10
+          done
+          exit 1
+
+      # GitHub disables scheduled workflows in public repos after 60 days
+      # without commits. Re-enabling it on every run keeps the schedule alive
+      # through quiet periods.
+      - name: Keep the schedule enabled
+        if: always()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh api --method PUT "repos/${{ github.repository }}/actions/workflows/seo-refresh.yml/enable" || true

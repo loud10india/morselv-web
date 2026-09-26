@@ -13,14 +13,27 @@
   <script>document.documentElement.classList.add("js");</script>
   <style>.js #prerender{display:none}</style>
 
-  <!-- Google tag (gtag.js) -->
-  <script async src="https://www.googletagmanager.com/gtag/js?id=G-0FMHHH4W5T"></script>
+  <!--
+    Google tag (gtag.js). The queue is set up now so nothing is lost; the
+    library itself (~170 KB) loads after the page has, instead of competing
+    with the app's JavaScript for bandwidth. On a slow mobile connection that
+    competition added about a second before any listing could render.
+  -->
   <script>
     window.dataLayer = window.dataLayer || [];
     function gtag() { dataLayer.push(arguments); }
     gtag('js', new Date());
-
     gtag('config', 'G-0FMHHH4W5T');
+    (function () {
+      function loadGtag() {
+        var s = document.createElement("script");
+        s.async = true;
+        s.src = "https://www.googletagmanager.com/gtag/js?id=G-0FMHHH4W5T";
+        document.head.appendChild(s);
+      }
+      if (document.readyState === "complete") loadGtag();
+      else window.addEventListener("load", loadGtag, { once: true });
+    })();
   </script>
 
   <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144.png" />

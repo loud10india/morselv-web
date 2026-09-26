@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { imageSrc, onImageError } from "../../utils/imageFallback";
 import { Link } from "react-router-dom";
 import Breadcrumbs from "../utils/Breadcrumbs";
@@ -41,6 +41,12 @@ const LocationPin = () => (
  * to ~22,000px. A single grid plus lazy-loaded images keeps the markup to one
  * card per provider.
  */
+// Cards rendered in the first pass. The rest follow right after the first
+// paint: building all 343 cards (~10,000 elements) at once delayed the first
+// photo appearing by ~0.3 s on a mid-range phone. Every card still ends up in
+// the page, so nothing is hidden from visitors or crawlers.
+const FIRST_PASS = 24;
+
 function ServiceCardGrid({
   data,
   selectedCategory,
@@ -48,6 +54,21 @@ function ServiceCardGrid({
   crumbs = [],
   loaded = true,
 }) {
+  const [limit, setLimit] = useState(FIRST_PASS);
+  useEffect(() => {
+    setLimit(FIRST_PASS);
+    if (data.length <= FIRST_PASS) return undefined;
+    // Two frames: let the first batch paint, then add the rest.
+    let second;
+    const first = requestAnimationFrame(() => {
+      second = requestAnimationFrame(() => setLimit(Infinity));
+    });
+    return () => {
+      cancelAnimationFrame(first);
+      if (second) cancelAnimationFrame(second);
+    };
+  }, [data]);
+  const visible = limit === Infinity ? data : data.slice(0, limit);
   const breadcrumb = [selectedCategory?.Name, selectedSubCategory?.Name]
     .filter(Boolean)
     .join(" / ");
@@ -81,7 +102,7 @@ function ServiceCardGrid({
           </div>
         ) : (
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 xl:gap-5 list-none p-0 m-0">
-            {data.map((provider, index) => (
+            {visible.map((provider, index) => (
               <li key={provider.id}>
                 <article className="h-full">
                   <Link
