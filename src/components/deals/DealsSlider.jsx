@@ -9,10 +9,11 @@ import category from "../../api/category.js";
 import subCategory from "../../api/subCategory.js";
 import deals from "../../api/deals";
 import { useLoc } from "../context/LocationContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { listingMeta, toSlug } from "../../seo/siteConfig";
+import { listingMeta } from "../../seo/siteConfig";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import useListingUrlSync from "../../hooks/useListingUrlSync";
 
 // Distance filter options
 const distances = [
@@ -24,7 +25,6 @@ const distances = [
 ];
 
 function DealSlider() {
-  const navigate = useNavigate();
   const locationRouter = useLocation();
 
   const { location } = useLoc();
@@ -198,6 +198,11 @@ const toggleNestedDropdownFloating = (index) => {
     const params = new URLSearchParams(locationRouter.search);
     const min = params.get("min");
     const max = params.get("max");
+    // The URL decides the distance filter too: a link without ?min/?max
+    // (the "Services" crumb, the header) clears it.
+    if (min === null && max === null && selectedDistance.min !== undefined) {
+      setSelectedDistance({});
+    }
 
     if (min !== null || max !== null) {
       const minVal = min !== null ? parseFloat(min) : 0;
@@ -215,36 +220,8 @@ const toggleNestedDropdownFloating = (index) => {
     }
   }, [locationRouter, categoryList, subCategoryList]);
 
-  // Update URL when filters change
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    if (selectedDistance.min !== undefined)
-      params.set("min", selectedDistance.min);
-    if (
-      selectedDistance.max !== undefined &&
-      selectedDistance.max !== Infinity
-    ) {
-      params.set("max", selectedDistance.max);
-    }
-
-    let path = "/deals";
-
-    if (selectedCategory?.ID && selectedCategory?.Name) {
-      path += `/${selectedCategory.ID}-${toSlug(selectedCategory.Name)}`;
-    }
-
-    if (selectedSubCategory?.ID && selectedSubCategory?.Name) {
-      path += `/${selectedSubCategory.ID}-${toSlug(selectedSubCategory.Name)}`;
-    }
-
-    navigate({ pathname: path, search: params.toString() }, { replace: true });
-  }, [
-    selectedCategory.ID,
-    selectedSubCategory.ID,
-    selectedDistance?.min,
-    selectedDistance?.max,
-  ]);
+  // URL <-> filter state (see hooks/useListingUrlSync.js).
+  useListingUrlSync("deals", selectedCategory, selectedSubCategory, selectedDistance);
 
   // Load category and subcategory
   useEffect(() => {

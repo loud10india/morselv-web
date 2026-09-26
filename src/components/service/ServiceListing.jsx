@@ -9,12 +9,13 @@ import category from "../../api/category.js";
 import subCategory from "../../api/subCategory.js";
 import providers from "../../api/providers";
 import { useLoc } from "../context/LocationContext";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { listingMeta, toSlug } from "../../seo/siteConfig";
+import { listingMeta } from "../../seo/siteConfig";
 import { listingPrefetchKey } from "../../seo/core.js";
 import { takePrefetch } from "../../utils/prefetch";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import useListingUrlSync from "../../hooks/useListingUrlSync";
 
 // Distance filter options
 const distances = [
@@ -26,7 +27,6 @@ const distances = [
 ];
 
 function ServiceListing() {
-  const navigate = useNavigate();
   const locationRouter = useLocation();
 
   const { location } = useLoc();
@@ -202,6 +202,11 @@ function ServiceListing() {
     const params = new URLSearchParams(locationRouter.search);
     const min = params.get("min");
     const max = params.get("max");
+    // The URL decides the distance filter too: a link without ?min/?max
+    // (the "Services" crumb, the header) clears it.
+    if (min === null && max === null && selectedDistance.min !== undefined) {
+      setSelectedDistance({});
+    }
 
     if (min !== null || max !== null) {
       const minVal = min !== null ? parseFloat(min) : 0;
@@ -223,47 +228,8 @@ function ServiceListing() {
     subCategoryList,
   ]);
 
-  // Update URL when filters change
-  useEffect(() => {
-    const params = new URLSearchParams();
-
-    if (selectedDistance.min !== undefined)
-      params.set("min", selectedDistance.min);
-    if (
-      selectedDistance.max !== undefined &&
-      selectedDistance.max !== Infinity
-    ) {
-      params.set("max", selectedDistance.max);
-    }
-
-    let path = "/service";
-
-    if (selectedCategory?.ID && selectedCategory?.Name) {
-      path += `/${selectedCategory.ID}-${toSlug(selectedCategory.Name)}`;
-    }
-
-    if (selectedSubCategory?.ID && selectedSubCategory?.Name) {
-      path += `/${selectedSubCategory.ID}-${toSlug(selectedSubCategory.Name)}`;
-    }
-
-    const newUrl = `${path}?${params.toString()}`;
-
-    // Only navigate if URL is different
-    if (newUrl !== locationRouter.pathname + locationRouter.search) {
-      navigate(
-        { pathname: path, search: params.toString() },
-        { replace: true }
-      );
-    }
-  }, [
-    selectedCategory,
-    selectedSubCategory,
-    selectedDistance?.min,
-    selectedDistance?.max,
-    locationRouter.pathname,
-    locationRouter.search,
-    navigate,
-  ]);
+  // URL <-> filter state (see hooks/useListingUrlSync.js).
+  useListingUrlSync("service", selectedCategory, selectedSubCategory, selectedDistance);
 
   // Load category + subcategory
   useEffect(() => {

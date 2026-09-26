@@ -17,7 +17,7 @@ import {
 
 const ServiceDetail = () => {
   const { providerID } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const [dataSet, setDataset] = useState({});
   const [selectedServiceID, setSelectedServiceID] = useState(-1);
@@ -85,8 +85,9 @@ const ServiceDetail = () => {
   // letter case, or a trailing slash) used to render the same page as a
   // separate, self-canonical URL. Send those to the canonical path.
   useEffect(() => {
-    if (meta && pathname !== meta.path) navigate(meta.path, { replace: true });
-  }, [meta, pathname, navigate]);
+    // Keep the query string and hash: campaign parameters must survive.
+    if (meta && pathname !== meta.path) navigate(meta.path + search + hash, { replace: true });
+  }, [meta, pathname, search, hash, navigate]);
 
   // "More like this": crawlable links to neighbouring providers in the same
   // sub-category, chosen deterministically so the pre-rendered page lists the

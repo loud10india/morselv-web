@@ -9,7 +9,7 @@ import { dealMeta } from "../../seo/siteConfig";
 
 const DealDetail = () => {
   const { dealID } = useParams();
-  const { pathname } = useLocation();
+  const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const [deal, setDeal] = useState(null);
   const [status, setStatus] = useState("loading");
@@ -48,8 +48,9 @@ const DealDetail = () => {
   // One URL per deal: any other slug, letter case or trailing slash
   // redirects to the canonical path.
   useEffect(() => {
-    if (meta && pathname !== meta.path) navigate(meta.path, { replace: true });
-  }, [meta, pathname, navigate]);
+    // Keep the query string and hash: campaign parameters must survive.
+    if (meta && pathname !== meta.path) navigate(meta.path + search + hash, { replace: true });
+  }, [meta, pathname, search, hash, navigate]);
 
   if (status === "loading") {
     return (
