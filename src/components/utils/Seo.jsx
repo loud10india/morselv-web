@@ -7,15 +7,19 @@ import {
   SITE_NAME,
   TWITTER_HANDLE,
   absoluteUrl,
+  normalizePath,
 } from "../../seo/siteConfig";
 
-// Every tag this component writes is stamped so it can be cleaned up on unmount
-// without disturbing the static tags that ship in index.html.
+// Every tag this component creates is stamped so it can be told apart from
+// the tags the pre-rendered HTML ships with.
 const OWNED = "data-seo-managed";
 
 const upsertMeta = (attr, key, content) => {
-  if (!content) return;
   let el = document.head.querySelector(`meta[${attr}="${key}"]`);
+  if (!content) {
+    el?.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement("meta");
     el.setAttribute(attr, key);
@@ -26,10 +30,13 @@ const upsertMeta = (attr, key, content) => {
 };
 
 const upsertLink = (rel, href) => {
-  if (!href) return;
-  // Adopt the static tag from index.html if it is there — creating a second
-  // <link rel="canonical"> would leave the page with conflicting canonicals.
+  // Adopt the pre-rendered tag if it is there — a second <link rel="canonical">
+  // would leave the page with conflicting canonicals.
   let el = document.head.querySelector(`link[rel="${rel}"]`);
+  if (!href) {
+    el?.remove();
+    return;
+  }
   if (!el) {
     el = document.createElement("link");
     el.setAttribute("rel", rel);
@@ -40,13 +47,13 @@ const upsertLink = (rel, href) => {
 };
 
 /**
- * Per-page document head: title, description, canonical, Open Graph,
- * Twitter cards and optional JSON-LD.
+ * Per-page document head: title, description, robots, canonical, Open Graph,
+ * Twitter card and JSON-LD.
  *
- * Note: this runs client-side. Google renders JS and will read these, but
- * link-preview crawlers that do not execute JS (Facebook, Slack, WhatsApp)
- * only see the static defaults in index.html. Pre-rendering or SSR is the
- * fix if rich per-page social previews are required.
+ * The first page a visitor lands on arrives with these already in the HTML
+ * (scripts/prerender.mjs writes them from the same src/seo/core.js), so
+ * crawlers and link previews that do not run JavaScript see the right values.
+ * This component keeps them correct as the visitor navigates client-side.
  */
 function Seo({
   title,
@@ -59,8 +66,7 @@ function Seo({
   schema,
 }) {
   const location = useLocation();
-  const canonicalPath = path ?? location.pathname;
-  const canonical = absoluteUrl(canonicalPath);
+  const canonical = absoluteUrl(normalizePath(path ?? location.pathname));
   const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
   const schemaKey = schema ? JSON.stringify(schema) : "";
 
@@ -71,9 +77,11 @@ function Seo({
     upsertMeta(
       "name",
       "robots",
-      noindex ? "noindex, nofollow" : "index, follow, max-image-preview:large"
+      // follow: a thin or missing page should still pass its links on.
+      noindex ? "noindex, follow" : "index, follow, max-image-preview:large"
     );
-    upsertLink("canonical", canonical);
+    // A page that asks not to be indexed has no canonical to declare.
+    upsertLink("canonical", noindex ? null : canonical);
 
     upsertMeta("property", "og:site_name", SITE_NAME);
     upsertMeta("property", "og:type", type);
@@ -81,7 +89,6 @@ function Seo({
     upsertMeta("property", "og:description", description);
     upsertMeta("property", "og:url", canonical);
     upsertMeta("property", "og:image", image);
-    // Social crawlers surface this for screen readers and when an image fails.
     upsertMeta("property", "og:image:alt", imageAlt || fullTitle);
     upsertMeta("property", "og:locale", "en_IN");
 
@@ -94,6 +101,14 @@ function Seo({
   }, [fullTitle, description, canonical, image, imageAlt, type, noindex]);
 
   useEffect(() => {
+    // The landing page's pre-rendered JSON-LD describes the URL the visitor
+    // arrived on. Once the app is running this component owns structured
+    // data, so drop the static copy rather than leave a duplicate (or, after
+    // client-side navigation, a stale one) in the head.
+    document.head
+      .querySelectorAll('script[type="application/ld+json"][data-prerender]')
+      .forEach((el) => el.remove());
+
     if (!schemaKey) return undefined;
     const script = document.createElement("script");
     script.type = "application/ld+json";

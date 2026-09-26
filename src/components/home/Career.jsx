@@ -1,6 +1,6 @@
 import React from "react";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 function Careers() {
   const jobs = [
@@ -16,15 +16,7 @@ function Careers() {
 
   return (
     <div className="w-full min-h-screen mt-[100px] flex flex-col items-center">
-      <Seo
-        title="Careers"
-        path="/Careers"
-        description="Join the Morselv team. Explore open roles and help build India's women-centric marketplace for wellness, beauty, fitness and lifestyle services."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Careers", path: "/Careers" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/Careers")} />
       <div
         className="w-full h-[330px] flex flex-col items-center justify-center -mt-8 md:-mt-2.5"
         style={{
@@ -32,26 +24,29 @@ function Careers() {
             "linear-gradient(180deg, rgba(254,205,140,0.40) 0%, rgba(163,163,163,0.00) 100%)",
         }}
       >
-        <p className="text-[#FECD8C] font-montserrat text-[24px] font-semibold leading-[30px] mt-[118px]">
-          CAREERS
-        </p>
-        <h1 className="font-inter text-[48px] md:text-[64px] font-semibold leading-[60px] md:leading-[80px] text-[#000] flex gap-3">
-          Join our{" "}
-          <span className="relative inline-block">
-            <span className="relative z-10">team</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="163"
-              height="28"
-              viewBox="0 0 163 28"
-              fill="none"
-              className="absolute bottom-2 left-2.5 z-0 opacity-100"
-            >
-              <path
-                d="M7.89346 0H163L155.107 28H0L7.89346 0Z"
-                fill="#FECD8C"
-              />
-            </svg>
+        {/* The label is part of the H1 so the heading names the page. */}
+        <h1 className="flex flex-col items-center mt-[118px]">
+          <span className="text-[#FECD8C] font-montserrat text-[24px] font-semibold leading-[30px]">
+            CAREERS
+          </span>
+          <span className="font-inter text-[48px] md:text-[64px] font-semibold leading-[60px] md:leading-[80px] text-[#000] flex gap-3">
+            Join our{" "}
+            <span className="relative inline-block">
+              <span className="relative z-10">team</span>
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                width="163"
+                height="28"
+                viewBox="0 0 163 28"
+                fill="none"
+                className="absolute bottom-2 left-2.5 z-0 opacity-100"
+              >
+                <path
+                  d="M7.89346 0H163L155.107 28H0L7.89346 0Z"
+                  fill="#FECD8C"
+                />
+              </svg>
+            </span>
           </span>
         </h1>
 

@@ -5,9 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "node scripts/generate-sitemap.mjs && vite build",
+    "build": "vite build && node scripts/prerender.mjs",
     "preview": "vite preview",
-    "sitemap": "node scripts/generate-sitemap.mjs"
+    "prerender": "node scripts/prerender.mjs"
   },
   "vercel-build": "vite build",
   "devDependencies": {

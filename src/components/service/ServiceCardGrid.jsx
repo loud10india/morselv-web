@@ -1,12 +1,15 @@
 import React from "react";
 import { imageSrc, onImageError } from "../../utils/imageFallback";
-import { useNavigate } from "react-router-dom";
-
-const toSlug = (str) =>
-  str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+import { Link } from "react-router-dom";
+import Breadcrumbs from "../utils/Breadcrumbs";
+import {
+  CARD_SIZES,
+  cleanText,
+  cloudinarySrcSet,
+  cloudinaryUrl,
+  IMAGE_WIDTH,
+  providerPath,
+} from "../../seo/siteConfig";
 
 const LocationPin = () => (
   <svg
@@ -38,13 +41,13 @@ const LocationPin = () => (
  * to ~22,000px. A single grid plus lazy-loaded images keeps the markup to one
  * card per provider.
  */
-function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
-  const navigate = useNavigate();
-
-  const handleCardClick = (provider) => {
-    navigate(`/provider/${toSlug(provider.providerName)}/${provider.id}`);
-  };
-
+function ServiceCardGrid({
+  data,
+  selectedCategory,
+  selectedSubCategory,
+  crumbs = [],
+  loaded = true,
+}) {
   const breadcrumb = [selectedCategory?.Name, selectedSubCategory?.Name]
     .filter(Boolean)
     .join(" / ");
@@ -54,21 +57,22 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 xl:px-0">
         {/* Breadcrumb + result count */}
         <div className="mb-5 flex flex-wrap items-baseline justify-between gap-2">
-          <p className="font-medium text-[12px] sm:text-[14px] lg:text-[18px] font-montserrat">
-            <span className="text-[#666]">{selectedCategory?.Name}</span>
-            {selectedSubCategory?.Name ? (
-              <span className="text-[#000]"> / {selectedSubCategory.Name}</span>
-            ) : null}
-          </p>
+          <Breadcrumbs items={crumbs} />
           {data.length > 0 && (
-            <p className="font-montserrat text-[13px] sm:text-[14px] text-[#777]">
+            // The heading for the card list (cards use <h3>), so the page
+            // reads h1 -> h2 -> h3.
+            <h2 className="font-montserrat text-[13px] sm:text-[14px] text-[#777]">
               {data.length} {data.length === 1 ? "provider" : "providers"}
               {breadcrumb ? ` in ${breadcrumb}` : ""}
-            </p>
+            </h2>
           )}
         </div>
 
-        {data.length === 0 ? (
+        {!loaded ? (
+          // Holds the space the results will fill, so the sections below
+          // stay out of view instead of being pushed down when they arrive.
+          <div className="min-h-screen" aria-busy="true" />
+        ) : data.length === 0 ? (
           <div className="rounded-2xl border border-[#EFEFEF] bg-[#FBFBFB] px-6 py-14 text-center">
             <p className="font-montserrat text-[15px] sm:text-[16px] text-[#5D5D5D]">
               We didn&rsquo;t find anything that matched your search. Try
@@ -77,48 +81,49 @@ function ServiceCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </div>
         ) : (
           <ul className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 sm:gap-4 xl:gap-5 list-none p-0 m-0">
-            {data.map((provider) => (
+            {data.map((provider, index) => (
               <li key={provider.id}>
-                <article
-                  onClick={() => handleCardClick(provider)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" || e.key === " ") {
-                      e.preventDefault();
-                      handleCardClick(provider);
-                    }
-                  }}
-                  role="link"
-                  tabIndex={0}
-                  className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] sm:rounded-[17px] bg-white shadow-[0_1.882px_8.799px_rgba(0,0,0,0.10)] sm:shadow-[0_3.422px_15.999px_rgba(0,0,0,0.10)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DE9636]"
-                >
-                  <div className="p-2 sm:p-3 lg:p-4">
-                    <div className="relative w-full overflow-hidden rounded-[10px] sm:rounded-[14px] border border-gray-200 bg-[#F4F4F4] aspect-square">
-                      <img
-                        src={imageSrc(provider.image)}
-                        onError={onImageError}
-                        alt={provider.providerName}
-                        loading="lazy"
-                        decoding="async"
-                        className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
-                      />
+                <article className="h-full">
+                  <Link
+                    // A real link: crawlers can follow it, and middle-click /
+                    // open-in-new-tab work (the card was a div with onClick).
+                    to={providerPath(provider.providerName, provider.id)}
+                    className="group flex h-full cursor-pointer flex-col overflow-hidden rounded-[14px] sm:rounded-[17px] bg-white shadow-[0_1.882px_8.799px_rgba(0,0,0,0.10)] sm:shadow-[0_3.422px_15.999px_rgba(0,0,0,0.10)] transition duration-300 hover:-translate-y-0.5 hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DE9636]"
+                  >
+                    <div className="p-2 sm:p-3 lg:p-4">
+                      <div className="relative w-full overflow-hidden rounded-[10px] sm:rounded-[14px] border border-gray-200 bg-[#F4F4F4] aspect-square">
+                        <img
+                          src={imageSrc(cloudinaryUrl(provider.image, IMAGE_WIDTH.card))}
+                          srcSet={cloudinarySrcSet(provider.image)}
+                          sizes={CARD_SIZES}
+                          data-original={provider.image || undefined}
+                          onError={onImageError}
+                          alt={cleanText(provider.providerName)}
+                          // The first row is in view on load: fetch it now, and leave
+                          // the rest (up to 343 cards) until they are scrolled to.
+                          loading={index < 4 ? "eager" : "lazy"}
+                          fetchPriority={index < 2 ? "high" : "auto"}
+                          decoding="async"
+                          className="absolute inset-0 h-full w-full object-cover transition duration-300 group-hover:scale-[1.03]"
+                        />
+                      </div>
                     </div>
-                  </div>
-
-                  <div className="flex flex-grow flex-col px-3 pb-3 sm:px-4 sm:pb-4">
-                    <span className="font-montserrat text-[10px] sm:text-[13px] font-medium leading-[125%] text-[#4D4D4D]">
-                      {provider.subCatName}
-                    </span>
-                    <h3 className="mt-1 truncate font-montserrat text-[12px] sm:text-[16px] lg:text-[19px] font-semibold text-[#2D2D2D]">
-                      {provider.providerName}
-                    </h3>
-                    <div className="mt-1 flex items-center gap-1 sm:gap-2">
-                      <LocationPin />
-                      <span className="truncate font-montserrat text-[10px] sm:text-[12px] lg:text-[13px] leading-snug text-[#4D4D4D]">
-                        {provider.area}
-                        {provider.city ? `, ${provider.city}` : ""}
+  
+                    <div className="flex flex-grow flex-col px-3 pb-3 sm:px-4 sm:pb-4">
+                      <span className="font-montserrat text-[10px] sm:text-[13px] font-medium leading-[125%] text-[#4D4D4D]">
+                        {provider.subCatName}
                       </span>
+                      <h3 className="mt-1 truncate font-montserrat text-[12px] sm:text-[16px] lg:text-[19px] font-semibold text-[#2D2D2D]">
+                        {provider.providerName}
+                      </h3>
+                      <div className="mt-1 flex items-center gap-1 sm:gap-2">
+                        <LocationPin />
+                        <span className="truncate font-montserrat text-[10px] sm:text-[12px] lg:text-[13px] leading-snug text-[#4D4D4D]">
+                          {[provider.area, provider.city].map(cleanText).filter(Boolean).join(", ")}
+                        </span>
+                      </div>
                     </div>
-                  </div>
+                  </Link>
                 </article>
               </li>
             ))}

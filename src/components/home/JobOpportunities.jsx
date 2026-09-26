@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import { toast } from "react-toastify";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 import jobsApi from "../../api/jobs";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
@@ -140,15 +140,7 @@ function JobOpportunities() {
 
   return (
     <main className="w-full bg-white">
-      <Seo
-        title="Job Opportunities"
-        path="/job-opportunities"
-        description="Job opportunities available with different partners of Morselv. Browse current openings and submit your CV for roles across salons, spas, wellness studios and lifestyle businesses."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Job Opportunities", path: "/job-opportunities" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/job-opportunities")} />
 
       {/* Hero */}
       <section

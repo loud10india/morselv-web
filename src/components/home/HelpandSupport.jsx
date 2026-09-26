@@ -1,7 +1,7 @@
 import React from "react";
 import HelpAndSupportImage from "../assets/helpandsupport.webp";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 import {
   EMAIL,
   PHONE_DISPLAY,
@@ -13,15 +13,7 @@ import {
 function HelpAndSupport() {
   return (
     <div className="w-full flex flex-col items-center bg-white text-black font-montserrat mt-[94px] px-4 pt-12 md:pt-20">
-      <Seo
-        title="Help & Support"
-        path="/HelpAndSupport"
-        description="Need a hand with a booking, an enquiry or your Morselv account? Chat with the Morselv support team on WhatsApp, or reach us by phone or email."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Help & Support", path: "/HelpAndSupport" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/HelpAndSupport")} />
       {/* Top Section */}
       <div className="w-full max-w-[1282px] flex flex-col md:flex-row justify-between items-start gap-10 md:gap-4 lg:gap-20">
         {/* Left Text Section */}
@@ -31,7 +23,7 @@ function HelpAndSupport() {
           </p>
           <h1 className="text-[#000] font-inter font-semibold text-[32px] md:text-[48px] lg:text-[64px] leading-[125%] mt-0">
             Need assistance? <br />
-            We’re here to
+            We’re here to{" "}
             <span className="relative inline-block">
               <span className="relative z-10 ml-1 md:ml-2">help.</span>
               <svg

@@ -1,7 +1,18 @@
 <!doctype html>
-<html lang="en">
+<html lang="en-IN">
 
 <head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <!--
+    Each public page is pre-rendered at build time (scripts/prerender.mjs) with
+    its own head and a plain-HTML copy of its content inside #root, for
+    crawlers and link previews that do not run JavaScript. Browsers that do run
+    it hide that copy and React renders the page as usual.
+  -->
+  <script>document.documentElement.classList.add("js");</script>
+  <style>.js #prerender{display:none}</style>
+
   <!-- Google tag (gtag.js) -->
   <script async src="https://www.googletagmanager.com/gtag/js?id=G-0FMHHH4W5T"></script>
   <script>
@@ -12,41 +23,37 @@
     gtag('config', 'G-0FMHHH4W5T');
   </script>
 
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" type="image/png" sizes="144x144" href="/favicon-144.png" />
   <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
   <meta name="theme-color" content="#121212" />
 
-  <!--
-    Static defaults. Per-page values are set at runtime by src/components/utils/Seo.jsx;
-    these are the fallback that non-JS crawlers and link-preview bots read.
-  -->
+  <!--seo-->
   <title>Morselv | India's Women-Centric Marketplace for Wellness, Beauty &amp; Lifestyle</title>
   <meta name="description"
     content="Discover trusted salons, spas, clinics, fitness studios and lifestyle experts near you. Compare verified providers, book services and unlock exclusive deals on Morselv." />
   <meta name="robots" content="index, follow, max-image-preview:large" />
-  <link rel="canonical" href="https://www.morselv.com/" />
-
   <meta property="og:site_name" content="Morselv" />
   <meta property="og:type" content="website" />
   <meta property="og:title" content="Morselv | India's Women-Centric Marketplace for Wellness, Beauty &amp; Lifestyle" />
   <meta property="og:description"
     content="Discover trusted salons, spas, clinics, fitness studios and lifestyle experts near you. Compare verified providers, book services and unlock exclusive deals on Morselv." />
-  <meta property="og:url" content="https://www.morselv.com/" />
   <meta property="og:image" content="https://www.morselv.com/og-image.jpg" />
   <meta property="og:image:width" content="1200" />
   <meta property="og:image:height" content="630" />
   <meta property="og:locale" content="en_IN" />
-
   <meta name="twitter:card" content="summary_large_image" />
   <meta name="twitter:site" content="@morselv" />
   <meta name="twitter:title" content="Morselv | India's Women-Centric Marketplace for Wellness, Beauty &amp; Lifestyle" />
   <meta name="twitter:description"
     content="Discover trusted salons, spas, clinics, fitness studios and lifestyle experts near you. Compare verified providers, book services and unlock exclusive deals on Morselv." />
   <meta name="twitter:image" content="https://www.morselv.com/og-image.jpg" />
+  <!--/seo-->
 
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <!-- Provider, deal and banner photos come from Cloudinary; opening the
+       connection early saves several round trips before the first photo. -->
+  <link rel="preconnect" href="https://res.cloudinary.com" />
+  <!-- Reverse geocoding for "near you" results. -->
   <link rel="dns-prefetch" href="https://maps.googleapis.com" />
 </head>
 

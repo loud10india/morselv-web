@@ -2,10 +2,16 @@ import React from "react";
 import bgImg from "../assets/bgImg.webp";
 import overlay from "../assets/contentoverlay.png";
 import SearchBar from "../home/SearchBar";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 import tick from "../assets/tick.png";
 import bgimgmobile from "../assets/bgimgmobile.webp";
 
 function Home() {
+  // Both hero layouts are in the DOM (one hidden by CSS); only the visible one
+  // carries the <h1>.
+  const isMdUp = useMediaQuery(minWidth("md"));
+  const DesktopHeading = isMdUp ? "h1" : "p";
+  const MobileHeading = isMdUp ? "p" : "h1";
   return (
     <div className="min-h-screen flex flex-col">
       {/* Desktop Version */}
@@ -17,14 +23,16 @@ function Home() {
         }}
       >        <div className="flex-1 flex flex-col items-center w-full">
           <img 
-            src={overlay} 
+            src={overlay}
             alt=""
+            width="345"
+            height="107"
             className="w-[281px] h-[99px] mb-6 translate-y-10"
           />
           
-          <h1 className="leading-[125%] tracking-[0%] font-montserrat font-light text-[#FECD8C] 
+          <DesktopHeading className="leading-[125%] tracking-[0%] font-montserrat font-light text-[#FECD8C] 
            mx-auto text-center md:text-7xl md:w-[80%] lg:w-[100%]"
-             >WE KNOW WHAT WOMEN NEED</h1>
+             >WE KNOW WHAT WOMEN NEED</DesktopHeading>
           <p className=" font-Montserrat sm:text-base text-[18px] pb-12 h-[23px] leading-[125%] tracking-[0%] md:text-lg text-[#FFFFFF] 
            sm:mb-10 px-2 sm:px-4 text-center md:w-[70%] lg:w-[100%] mt-8
 ">
@@ -71,13 +79,15 @@ function Home() {
       {/* Mobile Version */}
       <div className="md:hidden relative w-full pt-12 flex flex-col items-center min-h-screen"
            style={{ backgroundImage: `url(${bgimgmobile})`, backgroundSize: 'cover' }}>
-        <img src={overlay} alt="" className="w-[350px] h-auto mb-4 pt-[70px]" />
+        {/* Intrinsic size lets the browser reserve the image's height before it
+            loads; without it the heading and search bar jumped down. */}
+        <img src={overlay} alt="" width="345" height="107" className="w-[350px] h-auto mb-4 pt-[70px]" />
        
-        <h1 className="leading-[125%] tracking-[0%]
+        <MobileHeading className="leading-[125%] tracking-[0%]
            text-6xl sm:text-6xl font-montserrat font-light text-[#FECD8C] 
            mx-auto mb-6 sm:mb-8 px-2 text-center">
           WE KNOW WHAT WOMEN NEED
-        </h1>
+        </MobileHeading>
 
         <p className="text-center font-montserrat text-[16px] text-white max-w-[75%] h-[23px] leading-[125%] tracking-[0%] 
            mb-12 sm:mb-10 px-2 sm:-mt-2 sm:px-4 -mt-4">

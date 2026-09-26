@@ -16,7 +16,7 @@ const SECTIONS = [
   {
     heading: "About Morselv",
     links: [
-      { label: "About Us", to: "/AboutUs" },
+      { label: "About Us", to: "/AboutUS" },
       { label: "Help & Support", to: "/HelpAndSupport" },
       { label: "Privacy Policy", to: "/PrivacyPolicy" },
       { label: "Terms & Conditions", to: "/TermsAndConditions" },
@@ -27,7 +27,7 @@ const SECTIONS = [
     links: [
       { label: "All Services", to: "/service" },
       { label: "Deals Around You", to: "/deals" },
-      { label: "Blog", to: "http://blog.morselv.com/", external: true },
+      { label: "Blog", to: "https://blog.morselv.com/", external: true },
       { label: "FAQs", to: "/faq" },
     ],
   },

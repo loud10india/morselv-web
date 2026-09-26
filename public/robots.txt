@@ -1,15 +1,16 @@
 User-agent: *
 Allow: /
 
-# Crawler traps: filtered/faceted listing permutations produce near-duplicate
-# pages with no unique content. The canonical listing pages stay crawlable.
-Disallow: /*?q=
-Disallow: /*?distance=
-Disallow: /*&
-Allow: /*.js$
-Allow: /*.css$
-Allow: /*.svg$
-Allow: /*.png$
-Allow: /*.jpg$
+# Listing pages can be narrowed by distance from the visitor (?min= / ?max=).
+# Those results depend on who is looking, and every variant declares the
+# unfiltered listing as its canonical, so there is nothing for a crawler to
+# gain from them.
+Disallow: /*?*min=
+Disallow: /*?*max=
+
+# This host serves only the public site. The admin panel and the API are
+# separate hosts and carry their own noindex controls; pages that should stay
+# out of search here (customer registration, missing listings) say so with a
+# robots meta tag, which a Disallow would hide from crawlers.
 
 Sitemap: https://www.morselv.com/sitemap.xml

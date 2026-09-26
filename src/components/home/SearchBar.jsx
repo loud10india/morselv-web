@@ -3,6 +3,7 @@ import { MapPinIcon, MagnifyingGlassIcon } from "@heroicons/react/24/solid";
 import { useLoc } from "../context/LocationContext";
 import providers from "../../api/providers";
 import { useNavigate } from "react-router-dom";
+import { toSlug } from "../../seo/siteConfig";
 
 // Popular services
 const popularSearches = [
@@ -40,11 +41,6 @@ function SearchBar() {
   const naviagte = useNavigate();
   const containerRef = useRef(null);
 
-  const toSlug = (str) =>
-    str
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
 
   // Handle service search typing
   const handleChange = (e) => {

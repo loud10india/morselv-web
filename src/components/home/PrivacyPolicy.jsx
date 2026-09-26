@@ -1,19 +1,11 @@
 import React from "react";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 function PrivacyPolicy() {
   return (
     <div className="w-full min-h-screen flex flex-col items-center bg-white font-montserrat mt-[70px] md:mt-[90px]">
-      <Seo
-        title="Privacy Policy"
-        path="/PrivacyPolicy"
-        description="How Morselv collects, uses, stores and protects your personal information."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Privacy Policy", path: "/PrivacyPolicy" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/PrivacyPolicy")} />
       {/* ================= HERO SECTION ================= */}
       <div
         className="w-full flex flex-col items-center justify-center text-center px-4 py-10"
@@ -22,11 +14,14 @@ function PrivacyPolicy() {
             "linear-gradient(180deg, rgba(254, 205, 140, 0.40) 0%, rgba(163, 163, 163, 0.00) 100%)",
         }}
       >
-        <p className="text-[#FECD8C] font-montserrat font-semibold text-[24px] leading-[30px] mt-[108px]">
-          PRIVACY POLICY
-        </p>
-        <h1 className="text-[#000] font-inter font-semibold text-[40px] md:text-[64px] leading-[125%] mt-2">
-          Your Trust, Our Priority
+        {/* The label is part of the H1 so the heading names the page. */}
+        <h1 className="mt-[108px]">
+          <span className="block text-[#FECD8C] font-montserrat font-semibold text-[24px] leading-[30px]">
+            PRIVACY POLICY
+          </span>
+          <span className="block text-[#000] font-inter font-semibold text-[40px] md:text-[64px] leading-[125%] mt-2">
+            Your Trust, Our Priority
+          </span>
         </h1>
         <p className="text-[#5D5D5D] font-inter font-normal text-[16px] md:text-[20px] leading-[125%] max-w-[1280px] mt-4 text-center">
           At Mor-Selv, your privacy is our priority. We are committed to

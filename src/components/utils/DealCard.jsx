@@ -1,5 +1,6 @@
 import React from "react";
 import { imageSrc, onImageError } from "../../utils/imageFallback";
+import { cloudinaryUrl, IMAGE_WIDTH } from "../../seo/siteConfig";
 import { MapPin } from "lucide-react";
 function DealCard({ image, subCatName, dealName, providerName, city, area }) {
   return (
@@ -15,9 +16,12 @@ function DealCard({ image, subCatName, dealName, providerName, city, area }) {
       {/* Image */}
       <div className="w-full aspect-square overflow-hidden rounded-t-[16.71px]">
         <img
-          src={imageSrc(image)}
-                        onError={onImageError}
+          src={imageSrc(cloudinaryUrl(image, IMAGE_WIDTH.card))}
+          data-original={image || undefined}
+          onError={onImageError}
           alt={dealName}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover"
         />
       </div>
@@ -27,12 +31,12 @@ function DealCard({ image, subCatName, dealName, providerName, city, area }) {
         <span className="font-medium text-[14px] sm:text-sm leading-[125%] text-[#4d4d4d] truncate">
           {subCatName}
         </span>
-        <h2 className="text-[20px] font-semibold text-[#2d2d2d] mt-1 truncate">
+        <h3 className="text-[20px] font-semibold text-[#2d2d2d] mt-1 truncate">
           {dealName}
-        </h2>
-        <h3 className="text-[16px] sm:text-base font-normal text-[#2d2d2d] truncate">
-          {providerName}
         </h3>
+        <p className="text-[16px] sm:text-base font-normal text-[#2d2d2d] truncate">
+          {providerName}
+        </p>
         {/* <p className="text-xs sm:text-sm text-gray-500 mt-1">
           <MapPin className="inline" />
           {area}, {city}

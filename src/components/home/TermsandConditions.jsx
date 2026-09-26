@@ -1,26 +1,22 @@
 import React from "react";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 function TermsAndConditions() {
   return (
     <div className="w-full min-h-screen bg-white flex flex-col mt-[70px] md:mt-[70px]">
-      <Seo
-        title="Terms & Conditions"
-        path="/TermsAndConditions"
-        description="The terms that govern your use of the Morselv platform and services."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Terms & Conditions", path: "/TermsAndConditions" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/TermsAndConditions")} />
       {/* Top Gradient Box */}
       <div className="w-full bg-gradient-to-b from-[#FECD8C66] to-transparent flex flex-col justify-center items-center text-center px-4">
-        <h2 className="text-[#FECD8C] font-montserrat text-2xl font-semibold  leading-[125%] mt-[108px]">
-          TERMS & CONDITIONS
-        </h2>
-        <h1 className="text-[#000] font-inter text-5xl md:text-6xl font-semibold leading-[125%] mt-4">
-          Our Agreement with You
+        {/* The label is part of the H1 so the heading names the page (it was
+            an h2 placed before the h1). */}
+        <h1 className="mt-[108px]">
+          <span className="block text-[#FECD8C] font-montserrat text-2xl font-semibold leading-[125%]">
+            TERMS &amp; CONDITIONS
+          </span>
+          <span className="block text-[#000] font-inter text-5xl md:text-6xl font-semibold leading-[125%] mt-4">
+            Our Agreement with You
+          </span>
         </h1>
         <p className="text-[#5D5D5D] font-inter text-[16px] md:text-[20px] font-normal leading-[125%] max-w-[1280px] mt-4">
           At Mor-Selv, we value trust and transparency. These Terms & Conditions

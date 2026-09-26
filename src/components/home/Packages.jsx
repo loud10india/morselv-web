@@ -1,7 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 import { whatsappLink, WHATSAPP_MESSAGES } from "../../constants/contact";
 
 // Content transcribed from the Mor-Selv brochure (5-page package deck).
@@ -114,15 +114,7 @@ const FeatureItem = ({ item, tone = "dark" }) => (
 function Packages() {
   return (
     <main className="w-full bg-white">
-      <Seo
-        title="Packages"
-        path="/packages"
-        description="Mor-Selv branding packages for businesses — Growing Talent, Premium Luxury and Signature Elite, from ₹15,000/month, plus fully bespoke plans."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Packages", path: "/packages" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/packages")} />
 
       {/* ---------------- Hero ---------------- */}
       <section className="relative w-full bg-[#121212] pt-[130px] pb-16 md:pt-[160px] md:pb-24 overflow-hidden">

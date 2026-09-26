@@ -11,7 +11,8 @@ import providers from "../../api/providers";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { listingMeta, toSlug } from "../../seo/siteConfig";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 
 // Distance filter options
 const distances = [
@@ -48,6 +49,15 @@ function ServiceListing() {
   const [openNested, setOpenNested] = useState(null);
   const [mergedCatFilter, setMergedCatFilter] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  // Whether filteredData reflects a completed request. The robots decision
+  // for thin categories reads the count, so it must never act on the empty
+  // array a page starts with (or is left with after a failed request).
+  const [resultsLoaded, setResultsLoaded] = useState(false);
+  // Desktop and mobile headers are both in the DOM; only the visible one is
+  // the <h1>.
+  const isSmUp = useMediaQuery(minWidth("sm"));
+  const DesktopHeading = isSmUp ? "h1" : "p";
+  const MobileHeading = isSmUp ? "p" : "h1";
   const [showFloatingFilters, setShowFloatingFilters] = useState(false);
   
   // state variables for floating filters
@@ -63,11 +73,6 @@ function ServiceListing() {
   const floatingCategoriesRef = useRef(null);
   const floatingDistanceRef = useRef(null);
 
-  const toSlug = (str) =>
-    str
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
 
   // The URL only carries a slug. Until the category list loads we show a
   // readable version of it rather than the raw "skin-hair-beauty".
@@ -294,7 +299,11 @@ function ServiceListing() {
       };
       // console.log(selectedCategory.ID);
       // console.log(selectedSubCategory?.ID);
+      let active = true;
+      setResultsLoaded(false);
       providers.getProvidersByFilter(param).then((res) => {
+        if (!active) return;
+        setResultsLoaded(true);
         if (res.data?.length) {
           setFilteredData(
             res.data?.map((x) => ({
@@ -309,7 +318,14 @@ function ServiceListing() {
         } else {
           setFilteredData([]);
         }
+      }).catch(() => {
+        // Leave resultsLoaded false: an outage must not read as "no results".
+        if (active) setFilteredData([]);
       });
+      return () => {
+        // A newer filter superseded this request; ignore its late response.
+        active = false;
+      };
     }
   }, [
     selectedCategory.ID,
@@ -721,34 +737,22 @@ function ServiceListing() {
     );
   };
 
+  const unfiltered =
+    selectedDistance.min === undefined && selectedDistance.max === undefined;
+  const listing = listingMeta({
+    base: "service",
+    category: selectedCategory.ID ? selectedCategory : null,
+    subCategory: selectedSubCategory.ID ? selectedSubCategory : null,
+    // Only an unfiltered, completed result count says whether the page is thin.
+    count: resultsLoaded && unfiltered ? filteredData.length : undefined,
+    subNames: subCategoryList
+      .filter((sub) => sub.CatID === selectedCategory.ID)
+      .map((sub) => sub.SubCatName),
+  });
+
   return (
     <div className="bg-white w-full overflow-visible">
-      <Seo
-        title={
-          selectedSubCategory.Name
-            ? `${selectedSubCategory.Name} in ${location.city || "your city"}`
-            : selectedCategory.Name
-            ? `${selectedCategory.Name} Near You`
-            : "Services Near You"
-        }
-        description={
-          selectedCategory.Name
-            ? `Browse verified ${selectedCategory.Name} providers near you on Morselv. Compare businesses by area and distance, then enquire directly.`
-            : "Browse verified salons, spas, clinics, fitness studios and lifestyle experts near you. Filter by category and distance to find the right provider on Morselv."
-        }
-        schema={breadcrumbSchema(
-          [
-            { name: "Home", path: "/" },
-            { name: "Services", path: "/service" },
-            selectedCategory.Name
-              ? {
-                  name: selectedCategory.Name,
-                  path: `/service/${selectedCategory.ID}-${toSlug(selectedCategory.Name)}`,
-                }
-              : null,
-          ].filter(Boolean)
-        )}
-      />
+      <Seo {...listing} />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
 
@@ -760,12 +764,12 @@ function ServiceListing() {
         <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">
           {/* Page Title */}
           <div className="mb-8">
-            <h1 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
+            <DesktopHeading className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               SERVICE PROVIDERS{" "}
               {selectedCategory.Name && (
                 <span className="font-normal">- {selectedCategory.Name}</span>
               )}
-            </h1>
+            </DesktopHeading>
           </div>
 
           {/* Filters Section */}
@@ -1016,12 +1020,12 @@ function ServiceListing() {
       <div className="block sm:hidden px-4 pt-[120px] pb-4">
         {/* Title */}
         <div className="mb-6">
-          <h1 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
+          <MobileHeading className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             SERVICE PROVIDERS{" "}
             {selectedCategory.Name && (
               <span className="font-normal">- {selectedCategory.Name}</span>
             )}{" "}
-          </h1>
+          </MobileHeading>
         </div>
 
         {/* Filters label */}
@@ -1246,6 +1250,8 @@ function ServiceListing() {
           data={filteredData}
           selectedCategory={selectedCategory}
           selectedSubCategory={selectedSubCategory}
+          crumbs={listing.crumbs}
+          loaded={resultsLoaded}
         />
       </div>
       <div className="mb-20">

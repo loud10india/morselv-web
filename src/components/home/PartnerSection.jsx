@@ -1,86 +1,89 @@
 import React, { useState, useEffect } from "react";
-import b1 from "../assets/b1.jpg";
-import b2 from "../assets/b2.jpg";
-import b3 from "../assets/b3.jpg";
+import { Link } from "react-router-dom";
 import banner from "../../api/banner";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import { cloudinaryUrl } from "../../seo/siteConfig";
+import { onImageError } from "../../utils/imageFallback";
+import linkTarget from "../../utils/linkTarget";
+
+/**
+ * One banner. A real link (crawlable, keyboard-reachable) instead of a div
+ * with window.open, which also opened a blank tab for banners with no link.
+ * External partner banners are promotional placements: rel="sponsored".
+ */
+const Banner = ({ item, className, width }) => {
+  const dest = linkTarget(item?.link);
+  const image = item?.ImageName && (
+    <img
+      src={cloudinaryUrl(item.ImageName, width)}
+      data-original={item.ImageName}
+      onError={onImageError}
+      alt={dest?.label || "Featured on Morselv"}
+      loading="lazy"
+      decoding="async"
+      className="h-full w-full object-cover"
+    />
+  );
+  const classes = `block overflow-hidden rounded-lg border border-gray-200 bg-[#F4F4F4] shadow-md ${className}`;
+  if (dest?.internal) {
+    return (
+      <Link to={dest.to} className={classes}>
+        {image}
+      </Link>
+    );
+  }
+  if (dest) {
+    return (
+      <a href={dest.href} target="_blank" rel="sponsored noopener noreferrer" className={classes}>
+        {image}
+      </a>
+    );
+  }
+  return <div className={classes}>{image}</div>;
+};
 
 const PartnerSection = () => {
-  const [banners, setBanners] = useState([
-    { ID: 1, link: "" },
-    { ID: 2, link: "" },
-    { ID: 3, link: "" },
-  ]);
+  const [banners, setBanners] = useState([]);
+  // One layout at a time: images in a CSS-hidden copy would still download.
+  const isLg = useMediaQuery(minWidth("lg"));
 
   useEffect(() => {
-    banner.getAllBanner().then((res) => {
-      if (res.data) setBanners(res.data[0]);
-    });
+    let active = true;
+    banner
+      .getAllBanner()
+      .then((res) => {
+        if (active && Array.isArray(res?.data?.[0])) setBanners(res.data[0]);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
   }, []);
 
+  // The boxes keep their size while empty, so nothing moves when the images
+  // arrive (the placeholders used to request "url(undefined)").
+  const [wide, square1, square2] = [0, 1, 2].map((i) => banners[i] || {});
+
   return (
-  <div className="bg-[#fbfbfb]">
-    <div className="w-full lg:px-6 xl:px-6 py-8 -px-1">
-      {/* lg+ : one row only */}
-      <div className="hidden lg:flex gap-6 justify-center lg:w-[90%] mx-auto">
-        {/* First image - 33/16 */}
-        <div
-          className="flex-[2] rounded-lg shadow-md border border-gray-200 bg-center bg-cover object-contain aspect-[33/16] max-h-[350px]"
-          style={{ backgroundImage: `url(${banners[0].ImageName})` }}
-          onClick={() => window.open(banners[0].link, "_blank")}
-        />
-
-        {/* Second image - square */}
-        <div
-          className="flex-1 rounded-lg shadow-md border border-gray-200 bg-center bg-cover aspect-square max-h-[350px]"
-          style={{ backgroundImage: `url(${banners[1].ImageName})` }}
-          onClick={() => window.open(banners[1].link, "_blank")}
-        />
-
-        {/* Third image - square */}
-        <div
-          className="flex-1 rounded-lg shadow-md border border-gray-200 bg-center bg-cover aspect-square max-h-[350px]"
-          style={{ backgroundImage: `url(${banners[2].ImageName})` }}
-          onClick={() => window.open(banners[2].link, "_blank")}
-        />
-      </div>
-
-      {/* below lg : stacked in 2 rows */}
-      <div className="flex flex-col lg:hidden gap-4 w-full max-w-[90%] mx-auto mt-6 ">
-        {/* Banner on top */}
-        <div
-          className="w-full rounded-lg overflow-hidden shadow-md border border-gray-200 aspect-[33/16] max-h-[350px]"
-          style={{
-            backgroundImage: `url(${banners[0].ImageName})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
-          onClick={() => window.open(banners[0].link, "_blank")}
-        />
-
-        {/* Squares row */}
-        <div className="flex gap-4 w-full">
-          <div
-            className="flex-1 rounded-lg overflow-hidden shadow-md border border-gray-200 aspect-square max-h-[350px]"
-            style={{
-              backgroundImage: `url(${banners[1].ImageName})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-            onClick={() => window.open(banners[1].link, "_blank")}
-          />
-          <div
-            className="flex-1 rounded-lg overflow-hidden shadow-md border border-gray-200 aspect-square max-h-[350px]"
-            style={{
-              backgroundImage: `url(${banners[2].ImageName})`,
-              backgroundSize: "cover",
-              backgroundPosition: "center",
-            }}
-            onClick={() => window.open(banners[2].link, "_blank")}
-          />
-        </div>
+    <div className="bg-[#fbfbfb]">
+      <div className="w-full lg:px-6 xl:px-6 py-8 -px-1">
+        {isLg ? (
+          <div className="flex gap-6 justify-center lg:w-[90%] mx-auto">
+            <Banner item={wide} width={1200} className="flex-[2] aspect-[33/16] max-h-[350px]" />
+            <Banner item={square1} width={700} className="flex-1 aspect-square max-h-[350px]" />
+            <Banner item={square2} width={700} className="flex-1 aspect-square max-h-[350px]" />
+          </div>
+        ) : (
+          <div className="flex flex-col gap-4 w-full max-w-[90%] mx-auto mt-6">
+            <Banner item={wide} width={900} className="w-full aspect-[33/16] max-h-[350px]" />
+            <div className="flex gap-4 w-full">
+              <Banner item={square1} width={600} className="flex-1 aspect-square max-h-[350px]" />
+              <Banner item={square2} width={600} className="flex-1 aspect-square max-h-[350px]" />
+            </div>
+          </div>
+        )}
       </div>
     </div>
-  </div>
   );
 };
 

@@ -13,12 +13,8 @@ import c11 from "../assets/c12.png";
 import c12 from "../assets/c9.png";
 import { Link } from "react-router-dom";
 import category from "../../api/category";
+import { toSlug } from "../../seo/siteConfig";
 
-const toSlug = (str) =>
-  str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-") // spaces ? hyphen
-    .replace(/(^-|-$)+/g, ""); // trim hyphens
 
 function SecondSection() {
   const [categoryListData, setCategoryListData] = useState([]);

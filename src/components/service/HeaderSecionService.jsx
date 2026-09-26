@@ -1,15 +1,25 @@
 import React, { useState } from "react";
-import imageToDisplay from "../assets/1a42454ed0b5f558b2ab7f2478aefbb4d03a89c7.jpg";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import { cloudinaryUrl, IMAGE_WIDTH } from "../../seo/siteConfig";
+import { onImageError } from "../../utils/imageFallback";
 import ServicePopup from "./ServiceDetailPopup";
 import location from "../assets/location.svg";
-import image2 from "../assets/52d2e4f0c81eac47fe2d06a68cf9a28eeef1aabf.jpg";
-import image3 from "../assets/8c9fa45609ace4f02eb036c043ba06d353abc790.png";
 
 const HeaderSectionService = (props) => {
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
 
   const slides = props.imagesDataset;
+
+  // The four layouts below used to be rendered together and hidden with CSS:
+  // four <h1>s, and every photo downloaded four times (hidden <img> elements
+  // still load). Render only the one that fits. The hook reads the viewport
+  // synchronously, so the first paint already uses the right layout.
+  const isMd = useMediaQuery(minWidth("md"));
+  const isLg = useMediaQuery(minWidth("lg"));
+  const isXl = useMediaQuery(minWidth("xl"));
+  const photoAlt = (index) =>
+    props.dataSet.Name ? `${props.dataSet.Name} – photo ${index + 1}` : `Photo ${index + 1}`;
   // const slides = [
   //   { image: imageToDisplay },
   //   { image: image2 },
@@ -46,6 +56,9 @@ const HeaderSectionService = (props) => {
       />
 
       {/* Desktop Version */}
+      {props.breadcrumbs}
+
+      {isXl && (
       <div
         className="hidden xl:block relative mx-auto w-full pt-[10px]"
         style={{ maxWidth: "1280px" }}
@@ -62,8 +75,14 @@ const HeaderSectionService = (props) => {
                   }}
                 >
                   <img
-                    src={slide.url}
-                    alt={`slide-${index}`}
+                    src={cloudinaryUrl(slide.url, IMAGE_WIDTH.detail)}
+                    data-original={slide.url}
+                    onError={onImageError}
+                    alt={photoAlt(index)}
+                    // The first photo is usually the page's largest element.
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent pointer-events-none"></div>
@@ -149,7 +168,7 @@ const HeaderSectionService = (props) => {
             </p>
 
             <div className="flex items-center gap-2 mt-[22.5px] mb-[22.5px]">
-              <img src={location} alt="location" className="w-[35px] h-[35px] aspect-[1/1]" />
+              <img src={location} alt="" className="w-[35px] h-[35px] aspect-[1/1]" />
              <p className="text-[#4D4D4D] font-montserrat text-[16px] font-normal leading-[110%]">
                 {props.dataSet.FullAddress}
               </p>
@@ -174,8 +193,10 @@ const HeaderSectionService = (props) => {
           <div className="w-full h-px bg-[#A2A2A2] max-w-[1280px] mt-[50px]"></div>
         </div>
       </div>
+      )}
 
       {/* Laptop Version (lg to xl) */}
+      {isLg && !isXl && (
       <div className="hidden lg:block xl:hidden relative mx-auto w-full px-2 pt-[30px]">
         <div className="flex w-full items-start gap-8">
           <div className="w-[320px] min-w-[280px] h-auto aspect-square rounded-[20px] overflow-hidden relative">
@@ -189,8 +210,14 @@ const HeaderSectionService = (props) => {
                   }}
                 >
                   <img
-                    src={slide.url}
-                    alt={`slide-${index}`}
+                    src={cloudinaryUrl(slide.url, IMAGE_WIDTH.detail)}
+                    data-original={slide.url}
+                    onError={onImageError}
+                    alt={photoAlt(index)}
+                    // The first photo is usually the page's largest element.
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
@@ -272,7 +299,7 @@ const HeaderSectionService = (props) => {
               </span>
             </p>
             <div className="flex items-start gap-2 mt-[20px] mb-4">
-              <img src={location} alt="location" className="w-[35px] h-[35px] aspect-[1/1]" />
+              <img src={location} alt="" className="w-[35px] h-[35px] aspect-[1/1]" />
               <p className="text-[#4D4D4D] font-montserrat text-[16px]">
                 {props.dataSet.FullAddress}
               </p>
@@ -295,8 +322,10 @@ const HeaderSectionService = (props) => {
           <div className="w-full h-px bg-[#A2A2A2] mt-[25px]"></div>
         </div>
       </div>
+      )}
 
       {/* Tablet Version (md to lg) */}
+      {isMd && !isLg && (
       <div className="hidden md:flex lg:hidden flex-col items-center w-full pt-[10px]">
         <div className="flex flex-col md:flex-row w-full items-start gap-8 pt-[20px] px-3">
           <div className="w-full md:w-[320px] min-w-[280px] h-auto aspect-square rounded-[20px] overflow-hidden relative">
@@ -310,8 +339,14 @@ const HeaderSectionService = (props) => {
                   }}
                 >
                   <img
-                    src={slide.url}
-                    alt={`slide-${index}`}
+                    src={cloudinaryUrl(slide.url, IMAGE_WIDTH.detail)}
+                    data-original={slide.url}
+                    onError={onImageError}
+                    alt={photoAlt(index)}
+                    // The first photo is usually the page's largest element.
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
@@ -393,7 +428,7 @@ const HeaderSectionService = (props) => {
               </span>
             </p>
             <div className="flex items-start gap-2 mb-4 mt-[18px]">
-              <img src={location} alt="location" className="w-[35px] h-[35px] aspect-[1/1]" />
+              <img src={location} alt="" className="w-[35px] h-[35px] aspect-[1/1]" />
               <p className="text-[#4D4D4D] font-montserrat text-base">
                 {props.dataSet.FullAddress}
               </p>
@@ -416,8 +451,10 @@ const HeaderSectionService = (props) => {
           <div className="w-full h-px bg-[#A2A2A2] mt-[25px]"></div>
         </div>
       </div>
+      )}
 
       {/* Mobile Version - Full width image without any padding */}
+      {!isMd && (
       <div className="block md:hidden w-full -mt-[40px]">
         <div
           className="relative w-full overflow-hidden"
@@ -441,8 +478,14 @@ const HeaderSectionService = (props) => {
                   }}
                 >
                   <img
-                    src={slide.url}
-                    alt={`slide-${index}`}
+                    src={cloudinaryUrl(slide.url, IMAGE_WIDTH.detail)}
+                    data-original={slide.url}
+                    onError={onImageError}
+                    alt={photoAlt(index)}
+                    // The first photo is usually the page's largest element.
+                    fetchPriority={index === 0 ? "high" : "low"}
+                    loading={index === 0 ? "eager" : "lazy"}
+                    decoding="async"
                     className="w-full h-full object-cover"
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-transparent pointer-events-none"></div>
@@ -525,7 +568,7 @@ const HeaderSectionService = (props) => {
             </span>
           </p>
           <div className="flex items-center gap-2 mb-4 mt-3">
-           <img src={location} alt="location" className="w-[16.8px] h-[16.8px] aspect-[16.80/16.80]" />
+           <img src={location} alt="" className="w-[16.8px] h-[16.8px] aspect-[16.80/16.80]" />
             <p className="text-[#4D4D4D] font-montserrat text-[12px] font-normal leading-[110%]">
               {props.dataSet.FullAddress}
             </p>
@@ -545,6 +588,7 @@ const HeaderSectionService = (props) => {
           <div className="w-screen -ml-6 h-px font-normal bg-[#A2A2A2] mb-6"></div>
         </div>
       </div>
+      )}
     </div>
   );
 };

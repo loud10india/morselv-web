@@ -10,7 +10,7 @@ import { useLoc } from "../context/LocationContext";
 import HomeError from "./HomeError";
 import NotServicable from "./NotServicable";
 import Seo from "../utils/Seo";
-import { organizationSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 function HomePage() {
   const homeRef = useRef(null);
@@ -54,7 +54,7 @@ function HomePage() {
 
   return (
     <div className="w-full">
-      <Seo path="/" schema={organizationSchema()} />
+      <Seo {...staticPageMeta("/")} />
       <div ref={homeRef}>
         <Home />
       </div>

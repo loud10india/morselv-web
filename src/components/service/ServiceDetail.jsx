@@ -1,22 +1,36 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import PartnerSection from "../home/PartnerSection";
 import HeaderSectionService from "../service/HeaderSecionService";
 import AboutBusinessSection from "./AboutBussiness";
 import ServicePopup from "./ServiceDetailPopup";
-import { useParams, useLocation, Link } from "react-router-dom";
+import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import providers from "../../api/providers";
 import Seo from "../utils/Seo";
-import { localBusinessSchema } from "../../seo/siteConfig";
+import Breadcrumbs from "../utils/Breadcrumbs";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import {
+  cleanText,
+  providerMeta,
+  providerPath,
+  relatedByOrder,
+} from "../../seo/siteConfig";
 
 const ServiceDetail = () => {
   const { providerID } = useParams();
   const { pathname } = useLocation();
+  const navigate = useNavigate();
   const [dataSet, setDataset] = useState({});
   const [selectedServiceID, setSelectedServiceID] = useState(-1);
   const [serviceDataset, setServiceDataset] = useState([]);
   const [imagesDataset, setImagesDataset] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const [status, setStatus] = useState("loading");
+  const [related, setRelated] = useState([]);
+  // Offerings render one layout for the current width instead of four
+  // CSS-hidden copies.
+  const isMd = useMediaQuery(minWidth("md"));
+  const isLg = useMediaQuery(minWidth("lg"));
+  const isXl = useMediaQuery(minWidth("xl"));
   
   const openPopup = (ID) => {
     setSelectedServiceID(ID);
@@ -56,7 +70,52 @@ const ServiceDetail = () => {
       active = false;
     };
   }, [providerID]);
+
+  // Title, description, canonical path, breadcrumbs and schema — computed by
+  // the same code the build-time pre-render uses.
+  const meta = useMemo(
+    () =>
+      status === "ready"
+        ? providerMeta(dataSet, { services: serviceDataset, images: imagesDataset })
+        : null,
+    [status, dataSet, serviceDataset, imagesDataset]
+  );
+
+  // One URL per provider. The slug in the URL is decorative, so any text (or
+  // letter case, or a trailing slash) used to render the same page as a
+  // separate, self-canonical URL. Send those to the canonical path.
+  useEffect(() => {
+    if (meta && pathname !== meta.path) navigate(meta.path, { replace: true });
+  }, [meta, pathname, navigate]);
+
+  // "More like this": crawlable links to neighbouring providers in the same
+  // sub-category, chosen deterministically so the pre-rendered page lists the
+  // same ones.
+  useEffect(() => {
+    if (status !== "ready" || !dataSet.catID || !dataSet.SubCategoryID) {
+      setRelated([]);
+      return undefined;
+    }
+    let active = true;
+    providers
+      .getProvidersByFilter({ category: dataSet.catID, subCategory: dataSet.SubCategoryID })
+      .then((res) => {
+        if (active) setRelated(relatedByOrder(Array.isArray(res?.data) ? res.data : [], dataSet.ID));
+      })
+      .catch(() => active && setRelated([]));
+    return () => {
+      active = false;
+    };
+  }, [status, dataSet.ID, dataSet.catID, dataSet.SubCategoryID]);
   
+  if (status === "loading") {
+    return (
+      <div className="min-h-screen" aria-busy="true">
+        <Seo title="Service Provider" />
+      </div>
+    );
+  }
+
   if (status === "missing") {
     return (
       <div className="flex mx-auto flex-col w-full">
@@ -91,18 +150,22 @@ const ServiceDetail = () => {
 
   return (
     <div className="flex mx-auto flex-col w-full">
-      <Seo
-        title={dataSet.Name || "Service Provider"}
-        description={
-          dataSet.Description ||
-            `Explore services, timings and location for ${dataSet.Name || "this provider"} on Morselv.`
-        }
-        type="profile"
-        schema={localBusinessSchema(dataSet, pathname)}
-      />
+      {meta ? <Seo {...meta} /> : <Seo title="Service Provider" />}
       {/* Content with padding */}
       <div className="px-3 sm:px-4 md:px-5">
-        <HeaderSectionService dataSet={dataSet} imagesDataset={imagesDataset} />
+        <HeaderSectionService
+          dataSet={dataSet}
+          imagesDataset={imagesDataset}
+          breadcrumbs={
+            meta && (
+              // On phones the photo below is pulled up 40px under the header;
+              // the bottom margin keeps it clear of the trail.
+              <div className="relative z-10 mx-auto w-full max-w-[1280px] px-3 md:px-0 md:pt-3 mb-[44px] md:mb-3">
+                <Breadcrumbs items={meta.crumbs} />
+              </div>
+            )
+          }
+        />
         <ServicePopup
           isOpen={isPopupOpen}
           onClose={closePopup}
@@ -112,6 +175,7 @@ const ServiceDetail = () => {
         />
         
         {/* Desktop Version - Yoga services offerings */}
+        {isXl && (
         <div
           className="hidden xl:block relative mt-[52px] mx-auto w-auto"
           style={{ maxWidth: "1280px", width: "98%" }}
@@ -159,8 +223,10 @@ const ServiceDetail = () => {
             style={{ width: "100%" }}
           ></div>
         </div>
+        )}
 
         {/* Laptop Version (lg) - For screens between 1024px and 1279px */}
+        {isLg && !isXl && (
         <div className="hidden lg:block xl:hidden relative mt-[12px] mx-auto w-full px-5">
           <h2 className="text-[#2D2D2D] mt-30 font-montserrat font-semibold text-[28px] mb-6">
             Main Offerings
@@ -196,8 +262,10 @@ const ServiceDetail = () => {
           </div>
           <div className="h-px w-full bg-[#A2A2A2] mb-10 "></div>
         </div>
+        )}
 
         {/* Tablet Version (md) */}
+        {isMd && !isLg && (
         <div className="hidden md:block lg:hidden w-full mt-[12px] px-8">
           <h2 className="text-[#2D2D2D] font-inter font-semibold text-[24px] mb-6">
             Main Offerings
@@ -231,8 +299,10 @@ const ServiceDetail = () => {
           </div>
           <div className="h-px bg-[#A2A2A2] mt-8"></div>
         </div>
+        )}
 
         {/* Mobile Version */}
+        {!isMd && (
         <div className="block md:hidden w-full px-2">
           <h2 className="text-[#2D2D2D] font-inter font-semibold text-[20px] mb-4">
             Main Offerings
@@ -263,11 +333,55 @@ const ServiceDetail = () => {
           </div>
           <div className="w-screen -ml-6 h-px bg-[#A2A2A2] mt-6"></div>
         </div>
+        )}
         
         <AboutBusinessSection
           desc={dataSet.Description}
           providerID={dataSet.ID}
         />
+
+        {related.length > 0 && (
+          <section
+            aria-labelledby="related-providers"
+            className="mx-auto w-full max-w-[1280px] px-2 md:px-3 mb-14"
+          >
+            <div className="mb-4 flex flex-wrap items-baseline justify-between gap-2">
+              <h2
+                id="related-providers"
+                className="font-montserrat font-semibold text-[#2D2D2D] text-[20px] md:text-[26px]"
+              >
+                More {cleanText(dataSet.SubCategory) || "providers"} on Morselv
+              </h2>
+              {/* Home › Services › Category › Sub-category › Provider */}
+              {meta?.crumbs?.length === 5 && (
+                <Link
+                  to={meta.crumbs[3].path}
+                  className="font-montserrat text-[14px] font-semibold text-[#DE9636] hover:underline"
+                >
+                  See all {cleanText(dataSet.SubCategory)}
+                </Link>
+              )}
+            </div>
+            <ul className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
+              {related.map((r) => (
+                <li key={r.ID}>
+                  <Link
+                    to={providerPath(r.providerName, r.ID)}
+                    className="flex h-full flex-col rounded-[12px] border border-[#E5E5E5] bg-white px-4 py-3 transition hover:border-[#DE9636] hover:shadow-sm"
+                  >
+                    <span className="truncate font-montserrat text-[15px] font-semibold text-[#2D2D2D]">
+                      {cleanText(r.providerName)}
+                    </span>
+                    <span className="truncate font-montserrat text-[13px] text-[#6B6B6B]">
+                      {[r.area, r.city].map(cleanText).filter(Boolean).join(", ") ||
+                        cleanText(r.subCatName)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </section>
+        )}
       </div>
 
       {/* PartnerSection with full width but maintaining its internal structure */}

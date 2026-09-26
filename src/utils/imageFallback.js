@@ -23,9 +23,19 @@ export const IMAGE_PLACEHOLDER =
 export const imageSrc = (src) =>
   typeof src === "string" && src.trim() ? src : IMAGE_PLACEHOLDER;
 
-/** Swaps in the placeholder if the real URL fails to load. */
+/**
+ * If a resized image fails (data-original holds the untransformed URL), try
+ * the original once; if that fails too, show the placeholder.
+ */
 export const onImageError = (e) => {
-  if (e.currentTarget.dataset.fallbackApplied) return;
-  e.currentTarget.dataset.fallbackApplied = "1";
-  e.currentTarget.src = IMAGE_PLACEHOLDER;
+  const img = e.currentTarget;
+  const original = img.dataset.original;
+  if (original && !img.dataset.triedOriginal && img.src !== original) {
+    img.dataset.triedOriginal = "1";
+    img.src = original;
+    return;
+  }
+  if (img.dataset.fallbackApplied) return;
+  img.dataset.fallbackApplied = "1";
+  img.src = IMAGE_PLACEHOLDER;
 };

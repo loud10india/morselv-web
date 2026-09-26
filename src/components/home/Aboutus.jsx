@@ -1,19 +1,17 @@
 import React from "react";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 
 function Aboutus() {
+    // Desktop and mobile layouts are both in the DOM (one hidden by CSS). Only
+    // the visible one carries the <h1>, so the page has a single main heading.
+    const isMdUp = useMediaQuery(minWidth("md"));
+    const DesktopHeading = isMdUp ? "h1" : "div";
+    const MobileHeading = isMdUp ? "div" : "h1";
     return (
         <div className="w-full bg-white text-black font-montserrat overflow-x-hidden">
-          <Seo
-            title="About Us"
-            path="/AboutUS"
-            description="Morselv is India's women-centric marketplace connecting you with trusted salons, spas, clinics, studios and lifestyle experts. Learn about our mission and the team behind it."
-            schema={breadcrumbSchema([
-              { name: "Home", path: "/" },
-              { name: "About Us", path: "/AboutUS" },
-            ])}
-          />
+          <Seo {...staticPageMeta("/AboutUS")} />
             {/** ===================== DESKTOP (>= md) ===================== */}
             <div className="hidden md:block">
                 {/** HERO */}
@@ -21,26 +19,26 @@ function Aboutus() {
                     <div className="w-full max-w-[1280px] grid grid-cols-[minmax(0,506px)_minmax(500px,1fr)] items-start gap-4 mx-auto">
                         {/* Left copy */}
                         <div>
-                            <div className="text-[#FECD8C] text-[24px] font-normal font-600 leading-[30px] mb-4">
-                                ABOUT MOR-SELV
-                            </div>
-                            <h1 className="text-[#000] xl:text-[64px] text-[64px] font-bold md:text-[52px] leading-[80px] w-full">
-                                Wellness, Designed for{" "}
-                                <span className="relative inline-block">
-                                    <span className="relative z-10">Women</span>
-                                    <svg
-                                        xmlns="http://www.w3.org/2000/svg"
-                                        width="185"
-                                        height="39"
-                                        viewBox="0 0 215 39"
-                                        fill="none"
-                                        aria-hidden="true"
-                                        className="absolute bottom-[8px] left-0 ml-[20px] xl:ml-[80px] h-auto z-0 opacity-100 pointer-events-none"
-                                    >
-                                        <path d="M10.4116 0H215L204.588 39H0L10.4116 0Z" fill="#FECD8C" />
-                                    </svg>
+                            <DesktopHeading>
+                                <span className="block text-[#FECD8C] text-[24px] font-normal font-600 leading-[30px] mb-4">ABOUT MOR-SELV</span>
+                                <span className="block text-[#000] xl:text-[64px] text-[64px] font-bold md:text-[52px] leading-[80px] w-full">
+                                    Wellness, Designed for{" "}
+                                    <span className="relative inline-block">
+                                        <span className="relative z-10">Women</span>
+                                        <svg
+                                            xmlns="http://www.w3.org/2000/svg"
+                                            width="185"
+                                            height="39"
+                                            viewBox="0 0 215 39"
+                                            fill="none"
+                                            aria-hidden="true"
+                                            className="absolute bottom-[8px] left-0 ml-[20px] xl:ml-[80px] h-auto z-0 opacity-100 pointer-events-none"
+                                        >
+                                            <path d="M10.4116 0H215L204.588 39H0L10.4116 0Z" fill="#FECD8C" />
+                                        </svg>
+                                    </span>
                                 </span>
-                            </h1>
+                            </DesktopHeading>
                             <p className="font-inter text-[#4D4D4D] font-normal font-400 text-[18px] leading-[22.5px] w-full mt-6">
                                 Connecting you with trusted experts across every aspect <br /> of women's well-being.
                             </p>
@@ -263,23 +261,25 @@ function Aboutus() {
             <div className="block md:hidden w-full px-4 overflow-x-hidden mt-[105px]">
                 {/* HERO Mobile */}
                 <section>
-                    <div className="text-[#FECD8C] text-[18px] font-normal font-600 leading-[26px] mb-3">ABOUT MOR-SELV</div>
-                    <h1 className="text-[#000] text-[34px] font-bold leading-[42px]">
-                        Wellness, Designed for{" "}
-                        <span className="relative inline-block">
-                            <span className="relative z-10">Women</span>
-                            <svg
-                                xmlns="http://www.w3.org/2000/svg"
-                                width="100"
-                                height="18"
-                                viewBox="0 0 215 39"
-                                fill="none"
-                                className="absolute -bottom-0 left-0 ml-[40px] w-[115px] h-[28px] z-0"
-                            >
-                                <path d="M10.4116 0H215L204.588 39H0L10.4116 0Z" fill="#FCD69B" />
-                            </svg>
+                    <MobileHeading>
+                        <span className="block text-[#FECD8C] text-[18px] font-normal font-600 leading-[26px] mb-3">ABOUT MOR-SELV</span>
+                        <span className="block text-[#000] text-[34px] font-bold leading-[42px]">
+                            Wellness, Designed for{" "}
+                            <span className="relative inline-block">
+                                <span className="relative z-10">Women</span>
+                                <svg
+                                    xmlns="http://www.w3.org/2000/svg"
+                                    width="100"
+                                    height="18"
+                                    viewBox="0 0 215 39"
+                                    fill="none"
+                                    className="absolute -bottom-0 left-0 ml-[40px] w-[115px] h-[28px] z-0"
+                                >
+                                    <path d="M10.4116 0H215L204.588 39H0L10.4116 0Z" fill="#FCD69B" />
+                                </svg>
+                            </span>
                         </span>
-                    </h1>
+                    </MobileHeading>
                     <p className="font-inter text-[#4D4D4D] text-[16px] leading-[20px] mt-3">
                         Connecting you with trusted experts across every aspect of women's well-being.
                     </p>

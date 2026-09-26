@@ -11,7 +11,8 @@ import deals from "../../api/deals";
 import { useLoc } from "../context/LocationContext";
 import { useNavigate, useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { listingMeta, toSlug } from "../../seo/siteConfig";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 
 // Distance filter options
 const distances = [
@@ -59,6 +60,14 @@ function DealSlider() {
   const [openNested, setOpenNested] = useState(null);
   const [mergedCatFilter, setMergedCatFilter] = useState([]);
   const [filteredData, setFilteredData] = useState([]);
+  // Whether filteredData reflects a completed request; the thin-page robots
+  // decision must never act on the initial empty array or a failed request.
+  const [resultsLoaded, setResultsLoaded] = useState(false);
+  // Desktop and mobile headers are both in the DOM; only the visible one is
+  // the <h1>.
+  const isSmUp = useMediaQuery(minWidth("sm"));
+  const DesktopHeading = isSmUp ? "h1" : "p";
+  const MobileHeading = isSmUp ? "p" : "h1";
   const [showFloatingFilters, setShowFloatingFilters] = useState(false);
 
 // new state variables for floating filters
@@ -108,11 +117,6 @@ const toggleNestedDropdownFloating = (index) => {
   const floatingCategoriesRef = useRef(null);
   const floatingDistanceRef = useRef(null);
 
-  const toSlug = (str) =>
-    str
-      .toLowerCase()
-      .replace(/[^a-z0-9]+/g, "-")
-      .replace(/(^-|-$)+/g, "");
 
   // Scroll handler for floating filters
   useEffect(() => {
@@ -265,17 +269,26 @@ const toggleNestedDropdownFloating = (index) => {
 
   //Fetch providers when filters
   useEffect(() => {
+    // A category segment without a leading numeric ID parses to NaN; sending
+    // it would only produce a 400.
+    if (!Number.isFinite(Number(selectedCategory.ID))) return undefined;
     if (location.lat && location.lng) {
+      let active = true;
+      setResultsLoaded(false);
       let param = {
         category: selectedCategory.ID,
-        subCategory: selectedSubCategory.ID,
+        subCategory: Number.isFinite(Number(selectedSubCategory?.ID))
+          ? selectedSubCategory.ID
+          : 0,
         location: { ...location },
         distanceMin: selectedDistance.min,
         distanceMax: selectedDistance.max,
       };
       deals.getDealsByFilter(param).then((res) => {
+        if (!active) return;
+        setResultsLoaded(true);
         setFilteredData(
-          res.data?.map((x) => ({
+          (res.data || []).map((x) => ({
             id: x.ID,
             image: x.imageURL,
             subCatName: x.subCatName,
@@ -285,8 +298,14 @@ const toggleNestedDropdownFloating = (index) => {
             area: x.area,
           }))
         );
+      }).catch(() => {
+        if (active) setFilteredData([]);
       });
+      return () => {
+        active = false;
+      };
     }
+    return undefined;
   }, [
     selectedCategory.ID,
     selectedSubCategory.ID,
@@ -660,27 +679,18 @@ const toggleNestedDropdownFloating = (index) => {
     </div>
   );
 
+  const unfiltered =
+    selectedDistance.min === undefined && selectedDistance.max === undefined;
+  const listing = listingMeta({
+    base: "deals",
+    category: selectedCategory.ID ? selectedCategory : null,
+    subCategory: selectedSubCategory.ID ? selectedSubCategory : null,
+    count: resultsLoaded && unfiltered ? filteredData.length : undefined,
+  });
+
   return (
     <div className="bg-white w-full overflow-visible">
-      <Seo
-        title={
-          selectedCategory.Name
-            ? `${selectedCategory.Name} Deals`
-            : "Deals Around You"
-        }
-        description={
-          selectedCategory.Name
-            ? `Limited-time ${selectedCategory.Name} offers from trusted providers near you. Compare deals and enquire directly on Morselv.`
-            : "Discover limited-time offers from trusted salons, spas, wellness studios and lifestyle providers near you. Compare deals and enquire directly on Morselv."
-        }
-        schema={breadcrumbSchema(
-          [
-            { name: "Home", path: "/" },
-            { name: "Deals", path: "/deals" },
-            selectedCategory.Name ? { name: selectedCategory.Name, path: "/deals" } : null,
-          ].filter(Boolean)
-        )}
-      />
+      <Seo {...listing} />
       {/* inject the accordion CSS into this component */}
       <style>{accordionStyles}</style>
 
@@ -691,12 +701,12 @@ const toggleNestedDropdownFloating = (index) => {
         <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 pt-[130px] pb-[20px] relative">
           {/* Page Title */}
           <div className="mb-8">
-            <h1 className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
+            <DesktopHeading className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               Exclusive Deals{" "}
               {selectedCategory.Name && (
                 <span className="font-normal">- {selectedCategory.Name}</span>
               )}
-            </h1>
+            </DesktopHeading>
           </div>
 
           {/* Filters Section */}
@@ -943,12 +953,12 @@ const toggleNestedDropdownFloating = (index) => {
       <div className="block sm:hidden px-4 pt-[120px] pb-4">
         {/* Title */}
         <div className="mb-6">
-          <h1 className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
+          <MobileHeading className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             Exclusive Deals{" "}
           {selectedCategory.Name && (
             <span className="font-normal">- {selectedCategory.Name}</span>
           )}{" "}
-          </h1>
+          </MobileHeading>
         </div>
 
         {/* Filters label */}
@@ -1171,6 +1181,8 @@ const toggleNestedDropdownFloating = (index) => {
           data={filteredData}
           selectedCategory={selectedCategory}
           selectedSubCategory={selectedSubCategory}
+          crumbs={listing.crumbs}
+          loaded={resultsLoaded}
         />
       </div>
       <div className="mb-20">

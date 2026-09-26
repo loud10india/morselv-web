@@ -1,8 +1,11 @@
 import React, { useEffect, useMemo, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import providersApi from "../../api/providers";
 import galleryApi from "../../api/gallery";
 import { useLoc } from "../context/LocationContext";
+import { cloudinaryUrl, IMAGE_WIDTH, providerPath } from "../../seo/siteConfig";
+import { onImageError } from "../../utils/imageFallback";
+import linkTarget from "../../utils/linkTarget";
 
 import g1 from "../assets/Boulder Creek.jpg";
 import g2 from "../assets/Cactus Bloom.jpg";
@@ -45,11 +48,6 @@ const GALLERY_IMAGES = [
 const SLIDE_MS = 1000;
 const GALLERY_TARGET = 16;
 
-const toSlug = (str = "") =>
-  str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
 
 // 4 per row on desktop, 3 on tablet, 2 on mobile.
 const visibleForWidth = (width) => {
@@ -57,6 +55,41 @@ const visibleForWidth = (width) => {
   if (width >= 640) return 3;
   return 2;
 };
+
+/**
+ * A gallery tile: a real link when it has a destination (crawlable and
+ * reachable by keyboard; it was a div with a click handler). Admin-entered
+ * links to this site open in-app; external partner links are promotional
+ * placements, hence rel="sponsored". Clones that only exist to make the
+ * carousel loop are hidden from assistive tech and the tab order.
+ */
+function Tile({ image, hidden, children }) {
+  const dest = linkTarget(image.href);
+  const base = "group block overflow-hidden rounded-2xl bg-white shadow-[0_3px_15px_rgba(0,0,0,0.10)]";
+  const interactive = `${base} cursor-pointer transition hover:shadow-[0_6px_22px_rgba(0,0,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DE9636]`;
+  const tab = hidden ? -1 : undefined;
+  if (dest?.internal) {
+    return (
+      <Link to={dest.to} className={interactive} tabIndex={tab}>
+        {children}
+      </Link>
+    );
+  }
+  if (dest) {
+    return (
+      <a
+        href={dest.href}
+        className={interactive}
+        tabIndex={tab}
+        rel="sponsored noopener noreferrer"
+        target={image.newTab ? "_blank" : undefined}
+      >
+        {children}
+      </a>
+    );
+  }
+  return <div className={base}>{children}</div>;
+}
 
 function GallerySection() {
   const [perView, setPerView] = useState(() =>
@@ -67,7 +100,6 @@ function GallerySection() {
   const [paused, setPaused] = useState(false);
   const [providers, setProviders] = useState([]);
   const [managed, setManaged] = useState([]);
-  const navigate = useNavigate();
   const { location } = useLoc();
 
   // Admin-curated tiles win: each carries its own image and destination, set
@@ -114,7 +146,7 @@ function GallerySection() {
           .map((x) => ({
             src: x.imageURL,
             name: x.providerName,
-            href: `/provider/${toSlug(x.providerName)}/${x.ID}`,
+            href: providerPath(x.providerName, x.ID),
           }));
         if (active && mapped.length >= 4) setProviders(mapped);
       })
@@ -156,17 +188,6 @@ function GallerySection() {
     [items, perView]
   );
 
-  // Admin tiles point at arbitrary sites, so they open with window.open /
-  // location rather than the router, which only understands in-app paths.
-  const openTile = (image) => {
-    if (!image.href) return;
-    if (image.external) {
-      if (image.newTab) window.open(image.href, "_blank", "noopener,noreferrer");
-      else window.location.assign(image.href);
-      return;
-    }
-    navigate(image.href);
-  };
 
   const reduceMotion =
     typeof window !== "undefined" &&
@@ -236,28 +257,11 @@ function GallerySection() {
                 style={{ width: `${100 / perView}%` }}
                 aria-hidden={i >= total ? "true" : undefined}
               >
-                <div
-                  role={image.href ? "link" : undefined}
-                  tabIndex={image.href ? 0 : undefined}
-                  onClick={image.href ? () => openTile(image) : undefined}
-                  onKeyDown={
-                    image.href
-                      ? (e) => {
-                          if (e.key === "Enter" || e.key === " ") {
-                            e.preventDefault();
-                            openTile(image);
-                          }
-                        }
-                      : undefined
-                  }
-                  className={`group overflow-hidden rounded-2xl bg-white shadow-[0_3px_15px_rgba(0,0,0,0.10)] ${
-                    image.href
-                      ? "cursor-pointer transition hover:shadow-[0_6px_22px_rgba(0,0,0,0.16)] focus:outline-none focus-visible:ring-2 focus-visible:ring-[#DE9636]"
-                      : ""
-                  }`}
-                >
+                <Tile image={image} hidden={i >= total}>
                   <img
-                    src={image.src}
+                    src={cloudinaryUrl(image.src, IMAGE_WIDTH.card)}
+                    data-original={image.src}
+                    onError={onImageError}
                     alt={
                       image.href
                         ? `${image.name} — view this provider on Morselv`
@@ -269,7 +273,7 @@ function GallerySection() {
                     height="360"
                     className="w-full h-[150px] sm:h-[190px] lg:h-[230px] object-cover transition duration-300 group-hover:scale-[1.04]"
                   />
-                </div>
+                </Tile>
               </li>
             ))}
           </ul>

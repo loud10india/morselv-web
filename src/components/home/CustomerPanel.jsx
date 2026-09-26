@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { toast } from "react-toastify";
 import Seo from "../utils/Seo";
 import customer from "../../api/customer";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/;
 
@@ -166,16 +166,7 @@ function CustomerPanel() {
           </div>
         </div>
       )}
-      <Seo
-        title="Customer Panel"
-        path="/customer-panel"
-        description="Register with Morselv to keep your details with us and hear first about deals, new providers and offers near you."
-        noindex
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "Customer Panel", path: "/customer-panel" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/customer-panel")} />
 
       <section
         className="w-full flex flex-col items-center justify-center py-16 -mt-8 md:-mt-2.5"

@@ -1,23 +1,53 @@
-import React, { useEffect, useState } from "react";
-import imageToDisplay from "../assets/1a42454ed0b5f558b2ab7f2478aefbb4d03a89c7.jpg";
+import React, { useState } from "react";
+import { Link } from "react-router-dom";
 // import logoDots from '../assets/Group 1000001933.svg';
 import img from "../assets/weui_arrow-filled (1).svg";
 import location from "../assets/location.svg";
-import { useParams, useLocation } from "react-router-dom";
 import LeadForm from "./DealPopup";
-import deals from "../../api/deals";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import { cloudinaryUrl, IMAGE_WIDTH } from "../../seo/siteConfig";
+import { onImageError } from "../../utils/imageFallback";
 
-const HeaderSection = () => {
-  // const { dealID } = useLocation().state || {};
-  const { dealID } = useParams();
-  const [dataSet, setDataset] = useState({});
-  useEffect(() => {
-    if (dealID) {
-      deals.getDealDetails({ dealID }).then((res) => {
-        setDataset(res.data[0]);
-      });
-    }
-  }, [dealID]);
+const DEAL_IMAGE_SHADE =
+  "linear-gradient(180deg, rgba(0,0,0,0) 77.4%, rgba(0,0,0,0.5) 100%)";
+
+/**
+ * Deal photo as a real <img> (it was a CSS background, which image search
+ * cannot see and which has no alt text), with the same bottom shade on top.
+ */
+const DealImage = ({ src, alt }) =>
+  src ? (
+    <>
+      <img
+        src={cloudinaryUrl(src, IMAGE_WIDTH.detail)}
+        data-original={src}
+        onError={onImageError}
+        alt={alt}
+        fetchPriority="high"
+        decoding="async"
+        className="absolute inset-0 h-full w-full object-cover"
+      />
+      <div aria-hidden="true" className="absolute inset-0" style={{ background: DEAL_IMAGE_SHADE }} />
+    </>
+  ) : null;
+
+// "by <provider>" links to the provider's page when the deal has one.
+const ProviderName = ({ href, className, children }) =>
+  href ? (
+    <Link to={href} className={`${className} hover:text-[#DE9636]`}>
+      {children}
+    </Link>
+  ) : (
+    <span className={className}>{children}</span>
+  );
+
+const HeaderSection = ({ dataSet = {}, dealID, breadcrumbs, providerHref }) => {
+  // Desktop and mobile layouts are both in the DOM; only the visible one
+  // carries the <h1>.
+  const isMdUp = useMediaQuery(minWidth("md"));
+  const DesktopHeading = isMdUp ? "h1" : "p";
+  const MobileHeading = isMdUp ? "p" : "h1";
+  const imageAlt = [dataSet.DealName, dataSet.ProviderName].filter(Boolean).join(" at ");
   const [isPopupOpen, setIsPopupOpen] = useState(false);
   const openPopup = () => {
     setIsPopupOpen(true);
@@ -27,6 +57,7 @@ const HeaderSection = () => {
   };
   return (
     <div className="w-full flex flex-col flex-grow items-center">
+      {breadcrumbs}
       <LeadForm
         isOpen={isPopupOpen}
         onClose={closePopup}
@@ -37,23 +68,19 @@ const HeaderSection = () => {
       <div className="justify-between hidden lg:flex relative bg-white w-full max-w-[1280px] min-h-[530px] mt-[26px] overflow-visible ml-[150px] xl:ml-[50px] mr-4 md:flex md:flex-col md:items-center md:w-full md:mt-[24px]">
         <div
           className="relative -left-[20px] w-[432px] h-[432px] flex-shrink-0 rounded-[20px] border border-[#888] overflow-hidden mt-9 inset-0 z-10"
-          style={{
-            backgroundImage: `linear-gradient(180deg, rgba(0, 0, 0, 0) 77.4%, rgba(0, 0, 0, 0.5) 100%), url(${dataSet.ImageName})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            position: "absolute",
-          }}
+          style={{ position: "absolute" }}
         >
+          <DealImage src={dataSet.ImageName} alt={imageAlt} />
           {/* <img src={logoDots} alt="Logo Dots" className="w-[61.4px] h-[14px] absolute bottom-[23px] left-1/2 -translate-x-1/2 object-contain" /> */}
         </div>
 
         <div className="absolute top-5 left-0 pl-[450px] md:mt-6 h-full flex flex-col justify-start w-full mt-2 pr-[120px] xl:pr-4">
-          <h1 className="text-[#2D2D2D] font-montserrat font-bold md:text-[28px] lg:text-[40px] xl:text-[48px] leading-[140%] text-left w-full break-words">
+          <DesktopHeading className="text-[#2D2D2D] font-montserrat font-bold md:text-[28px] lg:text-[40px] xl:text-[48px] leading-[140%] text-left w-full break-words">
             <span className="whitespace-wrap">
               {/* Midweek Calm – 20% Off All Bookings */}
               {dataSet.DealName}
             </span>
-          </h1>
+          </DesktopHeading>
           <p className="text-[#4D4D4D] font-montserrat text-[16px] xl:text-[16px] font-normal mb-2 max-w-[700px] text-left">
             {/* Take a mindful pause midweek. Book any session and enjoy 20%
             off—because calm
@@ -63,13 +90,9 @@ const HeaderSection = () => {
 
           <p className="font-montserrat font-normal text-[20px] xl:text-[20px] leading-[125%] text-[#4D4D4D] -mb-2">
             by{" "}
-            <span
-              className="font-montserrat 
-          font-semibold text-[#2D2D2D]"
-            >
-              {/* INNERSTUDIO GLOW */}
+            <ProviderName href={providerHref} className="font-montserrat font-semibold text-[#2D2D2D]">
               {dataSet.ProviderName}
-            </span>
+            </ProviderName>
           </p>
           <br />
           {/* Fitness &amp; Body Movement / Yoga */}
@@ -87,7 +110,7 @@ const HeaderSection = () => {
           </p>
 
           <div className="flex items-center gap-2 mt-[22.5px] mb-[22.5px]">
-            <img src={location} alt="loaction" className="w-[30px] h-[30px] aspect-[1/1]" />
+            <img src={location} alt="" className="w-[30px] h-[30px] aspect-[1/1]" />
             <p className="text-[#4D4D4D] font-montserrat text-[16px] font-normal leading-[110%]">
               {/* Sector 45, Gurugram, Haryana 122018, India */}
               {dataSet.FullAddress}
@@ -113,19 +136,15 @@ const HeaderSection = () => {
       <div className="block md:hidden lg:hidden bg-white w-full -mt-[10px]">
         <div
           className="relative w-70% h-50% flex justify-center flex-shrink-0 aspect-square"
-          style={{
-            backgroundImage: `linear-gradient(180deg, rgba(0,0,0,0) 77.4%, rgba(0,0,0,0.5) 100%), url(${dataSet.ImageName})`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-          }}
         >
+          <DealImage src={dataSet.ImageName} alt={imageAlt} />
           {/* <img src={logoDots} alt="Logo Dots" className="w-[61.4px] h-[14px] absolute bottom-[23px] left-1/2 -translate-x-1/2 object-contain" /> */}
         </div>
 
         <div className="px-4 py-4">
-          <h1 className="text-[#2D2D2D] font-inter font-bold text-[24px] mb-[10px] leading-tight">
+          <MobileHeading className="text-[#2D2D2D] font-inter font-bold text-[24px] mb-[10px] leading-tight">
             {dataSet.DealName}
-          </h1>
+          </MobileHeading>
 
           <p className="text-[#4D4D4D] font-montserrat text-[12px] font-normal mb-[12px]">
             {dataSet.Description}
@@ -146,16 +165,17 @@ const HeaderSection = () => {
 
           <p className="font-montserrat font-normal text-[12px] text-[#4D4D4D] mt-2">
             by{" "}
-            <span
+            <ProviderName
+              href={providerHref}
               className="font-montserrat font-bold text-[12px] text-[#2D2D2D] underline underline-offset-2"
             >
               {dataSet.ProviderName}
-            </span>
+            </ProviderName>
           </p>
 
           
           <div className="flex items-center gap-2 mb-4 mt-3">
-            <img src={location} alt="location" className="w-[16.8px] h-[16.8px] flex-shrink-0 aspect-[16.80/16.80]" />
+            <img src={location} alt="" className="w-[16.8px] h-[16.8px] flex-shrink-0 aspect-[16.80/16.80]" />
             <p className="text-[#4D4D4D] font-montserrat text-[12px] font-normal">
               {dataSet.FullAddress}
             </p>

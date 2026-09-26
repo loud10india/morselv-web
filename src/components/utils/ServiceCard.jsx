@@ -1,5 +1,6 @@
 import React from "react";
 import { imageSrc, onImageError } from "../../utils/imageFallback";
+import { cloudinaryUrl, IMAGE_WIDTH } from "../../seo/siteConfig";
 import { MapPin } from "lucide-react";
 function ServiceCard({ image, subCatName, providerName, city, area }) {
   return (
@@ -14,9 +15,12 @@ function ServiceCard({ image, subCatName, providerName, city, area }) {
     >
       <div className="w-full aspect-square overflow-hidden rounded-t-[16.71px]">
         <img
-          src={imageSrc(image)}
-                        onError={onImageError}
+          src={imageSrc(cloudinaryUrl(image, IMAGE_WIDTH.card))}
+          data-original={image || undefined}
+          onError={onImageError}
           alt={providerName}
+          loading="lazy"
+          decoding="async"
           className="w-full h-full object-cover"
         />
       </div>
@@ -27,9 +31,9 @@ function ServiceCard({ image, subCatName, providerName, city, area }) {
         {/* <h3 className="text-sm sm:text-base font-semibold text-gray-800">
           {dealName}
         </h3> */}
-        <h2 className="text-[20px] font-semibold text-[#2d2d2d] mt-1 truncate">
+        <h3 className="text-[20px] font-semibold text-[#2d2d2d] mt-1 truncate">
           {providerName}
-        </h2>
+        </h3>
         {/* <p className="text-xs sm:text-sm text-gray-500 mt-1">
           <MapPin className="inline" />
           {area}, {city}

@@ -1,20 +1,23 @@
 import React from "react";
 import { imageSrc, onImageError } from "../../utils/imageFallback";
 import locationIcon from "../assets/mdi_location.svg";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
+import Breadcrumbs from "../utils/Breadcrumbs";
+import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
+import { cloudinarySrcSet, cloudinaryUrl, dealPath, IMAGE_WIDTH } from "../../seo/siteConfig";
 
-const toSlug = (str) =>
-  str
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, "-")
-    .replace(/(^-|-$)+/g, "");
+// A real link, so crawlers can follow it and open-in-new-tab works (the cards
+// were divs with an onClick).
+const DealCardLink = ({ deal, children, ...rest }) => (
+  <Link to={dealPath(deal.dealName, deal.id)} {...rest}>
+    {children}
+  </Link>
+);
 
-function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
-  const navigate = useNavigate();
-
-  const handleCardClick = (deal) => {
-    navigate(`/deal/${toSlug(deal.dealName)}/${deal.id}`);
-  };
+function DealCardGrid({ data, crumbs = [], loaded = true }) {
+  // One grid for the current width rather than three CSS-hidden copies.
+  const isSm = useMediaQuery(minWidth("sm"));
+  const isLg = useMediaQuery(minWidth("lg"));
 
 
   const displayedData = data;
@@ -22,26 +25,21 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
     <section className="w-full bg-white pt-6 pb-12 sm:pt-[45.75px] sm:pb-[50px]">
       {/* Breadcrumb - Consistent across all screen sizes */}
       <div className="max-w-7xl mx-auto px-4 sm:px-10 md:px-6 lg:px-6 xl:px-0 mb-4">
-        <p className="font-medium text-[12px] sm:text-[14px] lg:text-[18px]">
-          <span className="text-[#666] font-montserrat">
-            {selectedCategory.Name}
-          </span>
-          {selectedSubCategory.Name != "" && (
-            <span className="text-[#000] font-montserrat">
-              / {selectedSubCategory.Name}
-            </span>
-          )}
-        </p>
+        <Breadcrumbs items={crumbs} />
       </div>
       {/* Desktop Version */}
+      {/* Hold the results' space until they load (see ServiceCardGrid). */}
+      {!loaded && <div className="min-h-screen" aria-busy="true" />}
+
+      {loaded && isLg && (
       <div className="hidden lg:block">
         <div className="max-w-7xl mx-auto md:px-4 xl:px-0 lg:px-4">
-          {!displayedData.length && <div>We didn’t find anything that matched your search. Try resetting your filters.</div>}
+          {loaded && !displayedData.length && <div>We didn’t find anything that matched your search. Try resetting your filters.</div>}
           <div className="grid grid-cols-4 gap-4 xl:gap-5 justify-items-center">
             {displayedData.map((deal) => (
-              <div
+              <DealCardLink
                 key={deal.id}
-                onClick={() => handleCardClick(deal)}
+                deal={deal}
                 className="flex flex-col bg-white shadow-[0_3.422px_15.999px_rgba(0,0,0,0.10)] transform transition duration-300 hover:scale-[1.03] hover:shadow-[0_6px_20px_rgba(0,0,0,0.15)]"
                 style={{
                   borderRadius: "17.111px",
@@ -54,7 +52,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   <div
                     className="h-full w-full bg-cover bg-center border border-gray-200"
                     style={{
-                      backgroundImage: `url(${deal.image})`,
+                      backgroundImage: `url(${cloudinaryUrl(deal.image, IMAGE_WIDTH.card)})`,
                       borderTopLeftRadius: "17.111px",
                       borderTopRightRadius: "17.111px",
                       borderBottomLeftRadius: "3.442px",
@@ -96,7 +94,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                     </span>
                   </div>
                 </div>
-              </div>
+              </DealCardLink>
             ))}
           </div>
 
@@ -107,22 +105,24 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </div> */}
         </div>
       </div>
+      )}
 
       {/* Tablet Version (for screens between mobile and desktop) */}
+      {loaded && isSm && !isLg && (
       <div className="hidden sm:block lg:hidden">
         <div className="max-w-7xl mx-auto xl:ml-5 px-6 sm:px-6 lg:px-8">
           <div className="grid grid-cols-2 md:grid-cols-3 gap-4 justify-items-center">
             {displayedData.map((deal) => (
-              <div
+              <DealCardLink
                 key={deal.id}
-                onClick={() => handleCardClick(deal)}
+                deal={deal}
                 className="flex flex-col rounded-lg bg-white shadow-[0_3px_15px_rgba(0,0,0,0.10)] transform transition duration-300 hover:scale-[1.02] hover:shadow-[0_5px_18px_rgba(0,0,0,0.15)] w-full max-w-[305px]"
               >
                 <div className="relative pt-[75%] bg-white p-3">
                   <div
                     className="absolute top-0 left-0 right-0 bottom-0 m-3 bg-cover bg-center border border-gray-200 rounded-[10px]"
                     style={{
-                      backgroundImage: `url(${deal.image})`,
+                      backgroundImage: `url(${cloudinaryUrl(deal.image, IMAGE_WIDTH.card)})`,
                       borderTopLeftRadius: "17.111px",
                       borderTopRightRadius: "17.111px",
                       borderBottomLeftRadius: "3.442px",
@@ -163,7 +163,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                     </span>
                   </div>
                 </div>
-              </div>
+              </DealCardLink>
             ))}
           </div>
 
@@ -174,21 +174,28 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </div> */}
         </div>
       </div>
+      )}
 
       {/* Mobile Version */}
+      {loaded && !isSm && (
       <div className="block sm:hidden px-4 mx-auto sm:px-6 lg:px-[90px]">
         <div className="grid grid-cols-2 gap-3 justify-items-center">
           {displayedData.map((deal) => (
-            <div
-              key={deal.id}
-              onClick={() => handleCardClick(deal)}
+            <DealCardLink
+                key={deal.id}
+                deal={deal}
               className="flex flex-col rounded-lg border border-white bg-white shadow-sm overflow-hidden w-full"
               style={{ boxShadow: "0 1.882px 8.799px rgba(0, 0, 0, 0.10)" }}
             >
               <div className="relative bg-white p-2">
                 <div className="relative" style={{ paddingBottom: "100%" }}>
                   <img
-                    src={imageSrc(deal.image)}
+                    src={imageSrc(cloudinaryUrl(deal.image, IMAGE_WIDTH.card))}
+                    srcSet={cloudinarySrcSet(deal.image)}
+                    sizes="46vw"
+                    loading="lazy"
+                    decoding="async"
+                    data-original={deal.image || undefined}
                         onError={onImageError}
                     alt={deal.dealName}
                     className="absolute top-0 left-0 w-full h-full object-cover border border-gray-200"
@@ -237,7 +244,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
                   </span>
                 </div>
               </div>
-            </div>
+            </DealCardLink>
           ))}
         </div>
 
@@ -247,6 +254,7 @@ function DealCardGrid({ data, selectedCategory, selectedSubCategory }) {
           </button>
         </div> */}
       </div>
+      )}
     </section>
   );
 }

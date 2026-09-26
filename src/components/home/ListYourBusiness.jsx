@@ -1,20 +1,12 @@
 import React from "react";
 import Seo from "../utils/Seo";
 import ListYourBusinessForm from "./ListYourBusinessForm";
-import { breadcrumbSchema } from "../../seo/siteConfig";
+import { staticPageMeta } from "../../seo/siteConfig";
 
 function ListYourBusiness() {
   return (
     <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
-      <Seo
-        title="List Your Business"
-        path="/ListYourBusiness"
-        description="Get your salon, spa, clinic, studio or wellness practice in front of women actively searching for trusted services. List your business on Morselv and start receiving enquiries."
-        schema={breadcrumbSchema([
-          { name: "Home", path: "/" },
-          { name: "List Your Business", path: "/ListYourBusiness" },
-        ])}
-      />
+      <Seo {...staticPageMeta("/ListYourBusiness")} />
 
       <section
         className="w-full h-[330px] flex flex-col items-center justify-center -mt-8 md:-mt-2.5"
