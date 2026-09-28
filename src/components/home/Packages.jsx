@@ -113,7 +113,7 @@ const FeatureItem = ({ item, tone = "dark" }) => (
 
 function Packages() {
   return (
-    <main className="w-full bg-white">
+    <div className="w-full bg-white">
       <Seo {...staticPageMeta("/packages")} />
 
       {/* ---------------- Hero ---------------- */}
@@ -338,7 +338,7 @@ function Packages() {
           </div>
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

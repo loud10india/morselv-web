@@ -16,101 +16,53 @@ import category from "../../api/category";
 import { toSlug } from "../../seo/siteConfig";
 
 
-function SecondSection() {
-  const [categoryListData, setCategoryListData] = useState([]);
-  useEffect(() => {
-    category.getAllCategory().then((res) => {
-      // setCategoryListData(res.data);
+// Tiles in display order. `slug` is the listing's current URL slug, so the
+// tiles (twelve internal links) render immediately and still work if the
+// category request fails; the API's labels refine the slugs when they arrive.
+// Tile labels are marketing copy and may differ from the category names.
+const TILES = [
+  { id: 14, icon: c1, label: "Skin, Hair & Beauty", slug: "skin-hair-beauty" },
+  { id: 17, icon: c2, label: "Body Therapies", slug: "body-therapies" },
+  { id: 15, icon: c3, label: "Health & Wellness", slug: "health-wellness" },
+  { id: 18, icon: c4, label: "Mental & Emotional Wellness", slug: "mental-emotional-wellness" },
+  { id: 19, icon: c5, label: "Diet & Weight Management", slug: "diet-weight-management" },
+  { id: 16, icon: c6, label: "Travel & Relaxation", slug: "travel-relaxation" },
+  { id: 21, icon: c7, label: "Friends, Fun & Community", slug: "friends-fun-community" },
+  { id: 22, icon: c8, label: "Fitness & Body Movement", slug: "fitness-body-movement" },
+  { id: 23, icon: c9, label: "Career & Education", slug: "career-education" },
+  { id: 24, icon: c10, label: "Kids' Activities & Hobbies", slug: "child-hobbies-interests" },
+  { id: 25, icon: c11, label: "Finance & Legal Guidance", slug: "specialized-personal-services" },
+  { id: 26, icon: c12, label: "Other Services", slug: "other-services" },
+];
 
-      const categories = [
-        {
-          icon: c1,
-          label: "Skin, Hair & Beauty",
-          link:
-            "/service/14-" +
-            toSlug(res.data[0]?.find((e) => e.value === 14).label),
-        },
-        {
-          icon: c2,
-          label: "Body Therapies",
-          link:
-            "/service/17-" +
-            toSlug(res.data[0]?.find((e) => e.value === 17).label),
-        },
-        {
-          icon: c3,
-          label: "Health Wellness",
-          link:
-            "/service/15-" +
-            toSlug(res.data[0]?.find((e) => e.value === 15).label),
-        },
-        {
-          icon: c4,
-          label: "Mental & Emotional Wellness",
-          link:
-            "/service/18-" +
-            toSlug(res.data[0]?.find((e) => e.value === 18).label),
-        },
-        {
-          icon: c5,
-          label: "Diet & Weight Management",
-          link:
-            "/service/19-" +
-            toSlug(res.data[0]?.find((e) => e.value === 19).label),
-        },
-        {
-          icon: c6,
-          label: "Travel & Relaxation",
-          link:
-            "/service/16-" +
-            toSlug(res.data[0]?.find((e) => e.value === 16).label),
-        },
-        {
-          icon: c7,
-          label: "Friends, Fun & Community",
-          link:
-            "/service/21-" +
-            toSlug(res.data[0]?.find((e) => e.value === 21).label),
-        },
-        {
-          icon: c8,
-          label: "Fitness & Body Movement",
-          link:
-            "/service/22-" +
-            toSlug(res.data[0]?.find((e) => e.value === 22).label),
-        },
-        {
-          icon: c9,
-          label: "Career & Education",
-          link:
-            "/service/23-" +
-            toSlug(res.data[0]?.find((e) => e.value === 23).label),
-        },
-        {
-          icon: c10,
-          label: "Kids' Activites & Hobbies",
-          link:
-            "/service/24-" +
-            toSlug(res.data[0]?.find((e) => e.value === 24).label),
-        },
-        {
-          icon: c11,
-          label: "Finance & Legal Guidance",
-          link:
-            "/service/25-" +
-            toSlug(res.data[0]?.find((e) => e.value === 25).label),
-        },
-        {
-          icon: c12,
-          label: "Other Services",
-          link:
-            "/service/26-" +
-            toSlug(res.data[0]?.find((e) => e.value === 26).label),
-        },
-      ];
-      setCategoryListData(categories);
-    });
+function SecondSection() {
+  const [slugs, setSlugs] = useState({});
+  useEffect(() => {
+    let active = true;
+    category
+      .getAllCategory()
+      .then((res) => {
+        const rows = Array.isArray(res?.data?.[0]) ? res.data[0] : [];
+        const next = {};
+        for (const row of rows) {
+          const slug = toSlug(row?.label);
+          if (row?.value && slug) next[row.value] = slug;
+        }
+        if (active) setSlugs(next);
+      })
+      .catch(() => {
+        /* keep the built-in slugs */
+      });
+    return () => {
+      active = false;
+    };
   }, []);
+
+  const categoryListData = TILES.map((t) => ({
+    icon: t.icon,
+    label: t.label,
+    link: `/service/${t.id}-${slugs[t.id] || t.slug}`,
+  }));
 
   return (
     <div className="bg-[#FBFBFB] py-10 sm:py-12 md:py-16 flex justify-center ">
@@ -118,9 +70,9 @@ function SecondSection() {
       <div
         className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4 sm:gap-6 bg-[#fbfbfb] p-4 sm:p-6 rounded-3xl w-full max-w-[1200px] mx-3 lg:mx-0"
       >
-        {categoryListData.map((category, index) => (
+        {categoryListData.map((category) => (
           <Link
-            key={index}
+            key={category.link}
             to={category.link}
             className="flex flex-col items-center p-4 hover:bg-[#FEE5C5] rounded-3xl transition-colors cursor-pointer bg-white shadow-sm border"
           >

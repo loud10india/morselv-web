@@ -11,7 +11,8 @@ import deals from "../../api/deals";
 import { useLoc } from "../context/LocationContext";
 import { useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { listingMeta } from "../../seo/siteConfig";
+import { listingHeadingDetail, listingMeta } from "../../seo/siteConfig";
+import { selectionFromPath } from "../../utils/listingSelection";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 import useListingUrlSync from "../../hooks/useListingUrlSync";
 
@@ -45,16 +46,10 @@ function DealSlider() {
   const [categoryList, setCategoryList] = useState([]);
   const [subCategoryList, setSubCategoryList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
-    categoryState ?? {
-      ID: 0,
-      Name: "",
-    }
+    () => categoryState ?? selectionFromPath(locationRouter.pathname).category
   );
   const [selectedSubCategory, setSelectedSubCategory] = useState(
-    subCategoryState ?? {
-      ID: 0,
-      Name: "",
-    }
+    () => subCategoryState ?? selectionFromPath(locationRouter.pathname).subCategory
   );
   const [selectedDistance, setSelectedDistance] = useState({});
   const [openNested, setOpenNested] = useState(null);
@@ -225,12 +220,15 @@ const toggleNestedDropdownFloating = (index) => {
 
   // Load category and subcategory
   useEffect(() => {
-    category.getAllCategory().then((res) => {
-      setCategoryList(res.data[0]);
-    });
-    subCategory.getAllSubCategory().then((res) => {
-      setSubCategoryList(res.data[0]);
-    });
+    // On failure the filters stay empty and the URL's own labels are used.
+    category
+      .getAllCategory()
+      .then((res) => setCategoryList(res.data[0]))
+      .catch(() => {});
+    subCategory
+      .getAllSubCategory()
+      .then((res) => setSubCategoryList(res.data[0]))
+      .catch(() => {});
   }, []);
   
   // Merge categories with subcategories
@@ -658,6 +656,9 @@ const toggleNestedDropdownFloating = (index) => {
 
   const unfiltered =
     selectedDistance.min === undefined && selectedDistance.max === undefined;
+  // The most specific level the page is about: a sub-category page is headed
+  // by its own name, not its category's.
+  const headingDetail = listingHeadingDetail(selectedCategory, selectedSubCategory);
   const listing = listingMeta({
     base: "deals",
     category: selectedCategory.ID ? selectedCategory : null,
@@ -680,8 +681,8 @@ const toggleNestedDropdownFloating = (index) => {
           <div className="mb-8">
             <DesktopHeading className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               Exclusive Deals{" "}
-              {selectedCategory.Name && (
-                <span className="font-normal">- {selectedCategory.Name}</span>
+              {headingDetail && (
+                <span className="font-normal">- {headingDetail}</span>
               )}
             </DesktopHeading>
           </div>
@@ -932,9 +933,9 @@ const toggleNestedDropdownFloating = (index) => {
         <div className="mb-6">
           <MobileHeading className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             Exclusive Deals{" "}
-          {selectedCategory.Name && (
-            <span className="font-normal">- {selectedCategory.Name}</span>
-          )}{" "}
+          {headingDetail && (
+                <span className="font-normal">- {headingDetail}</span>
+              )}{" "}
           </MobileHeading>
         </div>
 

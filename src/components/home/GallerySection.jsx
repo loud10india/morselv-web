@@ -43,7 +43,9 @@ const GALLERY_IMAGES = [
   { src: g14, name: "The Gilded Rose" },
   { src: g15, name: "The Golden Oasis" },
   { src: g16, name: "The Rusty Spur Salon" },
-];
+  // Stock imagery, not businesses on Morselv: the names are file labels only
+  // and must never be presented to visitors as partners.
+].map((image) => ({ ...image, placeholder: true }));
 
 const SLIDE_MS = 1000;
 const GALLERY_TARGET = 16;
@@ -263,7 +265,9 @@ function GallerySection() {
                     data-original={image.src}
                     onError={onImageError}
                     alt={
-                      image.href
+                      image.placeholder
+                        ? "Women's wellness, beauty and lifestyle on Morselv"
+                        : image.href
                         ? `${image.name} — view this provider on Morselv`
                         : `${image.name} — partner business on Morselv`
                     }

@@ -47,9 +47,12 @@ function SearchBar() {
     const input = e.target.value;
     setQuery(input);
 
-    providers.getSearchResult({ query: input, ...location }).then((res) => {
-      setSearchOptions(res.data);
-    });
+    providers
+      .getSearchResult({ query: input, ...location })
+      .then((res) => setSearchOptions(res.data))
+      .catch(() => {
+        /* keep the previous suggestions */
+      });
 
     if (input.length > 0) {
       const matches = popularSearches.filter((service) =>

@@ -3,6 +3,7 @@ import { Link, useLocation, useNavigate, useParams } from "react-router-dom";
 import HeaderSection from "./HeaderSection";
 import PartnerSection from "../home/PartnerSection";
 import Seo from "../utils/Seo";
+import { prerenderedHtml } from "../../utils/prerendered";
 import Breadcrumbs from "../utils/Breadcrumbs";
 import deals from "../../api/deals";
 import { dealMeta } from "../../seo/siteConfig";
@@ -12,7 +13,10 @@ const DealDetail = () => {
   const { pathname, search, hash } = useLocation();
   const navigate = useNavigate();
   const [deal, setDeal] = useState(null);
+  // loading | ready | missing (the API confirmed there is no such deal) |
+  // error (the request failed; nothing is known about the deal).
   const [status, setStatus] = useState("loading");
+  const [attempt, setAttempt] = useState(0);
 
   useEffect(() => {
     if (!dealID) return undefined;
@@ -32,11 +36,13 @@ const DealDetail = () => {
         setDeal(row);
         setStatus("ready");
       })
-      .catch(() => active && setStatus("missing"));
+      // A failed request says nothing about whether the deal exists; treating
+      // it as "missing" marked live pages noindex whenever the API faltered.
+      .catch(() => active && setStatus("error"));
     return () => {
       active = false;
     };
-  }, [dealID]);
+  }, [dealID, attempt]);
 
   // Title, description, canonical path and breadcrumbs — the same code the
   // build-time pre-render uses.
@@ -52,10 +58,33 @@ const DealDetail = () => {
     if (meta && pathname !== meta.path) navigate(meta.path + search + hash, { replace: true });
   }, [meta, pathname, search, hash, navigate]);
 
+  // No <Seo> while loading or after a failed request: the pre-rendered HTML
+  // already carries this deal's title, canonical and structured data, and a
+  // placeholder would replace them with generic values.
   if (status === "loading") {
+    return <div className="pt-20 min-h-screen" aria-busy="true" />;
+  }
+
+  if (status === "error") {
+    // The request failed, so keep showing what the pre-rendered page said
+    // about this deal (its heading, details and links) under a retry notice.
+    const copy = prerenderedHtml(pathname);
     return (
-      <div className="pt-20 min-h-screen" aria-busy="true">
-        <Seo title="Deal" />
+      <div className="pt-20 flex min-h-[100%] flex-col">
+        <div
+          role="alert"
+          className="mx-auto mt-4 w-full max-w-[1280px] px-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-[#FFF6E5] py-3 text-[#2D2D2D] font-montserrat text-[14px]"
+        >
+          <span>We couldn&apos;t load the latest details for this deal. Please check your connection.</span>
+          <button
+            type="button"
+            onClick={() => setAttempt((n) => n + 1)}
+            className="rounded-[8px] bg-[#2D2D2D] text-white font-semibold px-5 py-2 hover:opacity-90 transition"
+          >
+            Try again
+          </button>
+        </div>
+        {copy && <div className="prerendered-copy" dangerouslySetInnerHTML={{ __html: copy }} />}
       </div>
     );
   }
@@ -88,7 +117,7 @@ const DealDetail = () => {
 
   return (
     <div className="pt-20 flex min-h-[100%]  flex-col">
-      {meta ? <Seo {...meta} /> : <Seo title="Deal" />}
+      {meta && <Seo {...meta} />}
       <HeaderSection
         dataSet={deal || {}}
         dealID={dealID}

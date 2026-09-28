@@ -5,7 +5,7 @@ import { staticPageMeta } from "../../seo/siteConfig";
 
 function ListYourBusiness() {
   return (
-    <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
+    <div className="w-full min-h-screen mt-[100px] flex flex-col items-center">
       <Seo {...staticPageMeta("/ListYourBusiness")} />
 
       <section
@@ -54,7 +54,7 @@ function ListYourBusiness() {
       >
         <ListYourBusinessForm />
       </section>
-    </main>
+    </div>
   );
 }
 

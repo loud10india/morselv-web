@@ -127,7 +127,7 @@ function CustomerPanel() {
   }, [showPopup]);
 
   return (
-    <main className="w-full min-h-screen mt-[100px] flex flex-col items-center">
+    <div className="w-full min-h-screen mt-[100px] flex flex-col items-center">
       {showPopup && (
         <div
           role="dialog"
@@ -281,7 +281,7 @@ function CustomerPanel() {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

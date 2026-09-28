@@ -16,6 +16,8 @@ export const {
   MIN_LISTING_ITEMS,
   toSlug,
   cleanText,
+  fullTitle,
+  listingHeadingDetail,
   normalizePath,
   providerPath,
   dealPath,

@@ -1,57 +1,60 @@
-import React, { useState } from "react";
-import { useRef, useEffect } from "react";
+import React from "react";
+import { Link } from "react-router-dom";
 
 const PopularSearches = () => {
+  // Relative paths to canonical listing pages. They used to be absolute
+  // https://morselv.com/... links (the non-www host, so every one went through
+  // a redirect) and four were dead "#" links. Where a sub-category page exists
+  // for the phrase it is the target; otherwise its category.
+  const SALON = "/service/14-skin-hair-beauty/11-salon";
   const data = [
-      { name: "Women Body Massage Centre", link: "#" },
-      { name: "Beauty Spa For Women", link: "https://morselv.com/service/17-body-therapies/17-spa-wellness-center" },
-      { name: "Saloon", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Beauty Parlours", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Female Psychiatrists", link: "https://morselv.com/service/18-mental-emotional-wellness" },
-      { name: "Yoga Class For Women", link: "https://morselv.com/service/22-fitness-body-movement" },
-      { name: "Skin Care For Females", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Female Physiotherapist", link: "https://morselv.com/service/15-health-wellness" },
-      { name: "Female Music Teacher", link: "https://morselv.com/service/24-child-hobbies-interests" },
-      { name: "Female Hair Stylists", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Female Ayurvedic Doctor", link: "https://morselv.com/service/15-health-wellness" },
-      { name: "Best Restaurants For Women", link: "https://morselv.com/service/21-friends-fun-community/24-restobar" },
-      { name: "Female Yoga Trainer", link: "https://morselv.com/service/22-fitness-body-movement" },
-      { name: "Education Consultant", link: "https://morselv.com/service/23-career-education" },
-      { name: "Female Homoeopathic Doctor", link: "https://morselv.com/service/15-health-wellness" },
-      { name: "Women Rejuvenation Center", link: "https://morselv.com/service/17-body-therapies/17-spa-wellness-center" },
-      { name: "Women Mental Health", link: "https://morselv.com/service/18-mental-emotional-wellness" },
-      { name: "Women Life Coach", link: "https://morselv.com/service/18-mental-emotional-wellness" },
-      { name: "Restaurants", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Women friendly Bars", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Online Classes for Women", link: "https://morselv.com/service/23-career-education" },
-      { name: "Wellness Tourism For Women", link: "https://morselv.com/service/17-body-therapies/17-spa-wellness-center" },
-      { name: "Solo Female Travel Groups", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Female Fitness Trainers", link: "https://morselv.com/service/22-fitness-body-movement" },
-      { name: "Beauty & Fashion", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Health & Fitness", link: "https://morselv.com/service/22-fitness-body-movement" },
-      { name: "Education & Career", link: "https://morselv.com/service/23-career-education" },
-      { name: "Makeup Artists", link: "https://morselv.com/service/14-skin-hair-beauty" },
-      { name: "Women Ayurvedic Doctor", link: "https://morselv.com/service/15-health-wellness" },
-      { name: "Women Body Therapies", link: "https://morselv.com/service/17-body-therapies/17-spa-wellness-center" },
-      { name: "Women Party Groups", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Women Helpline", link: "#" },
-      { name: "Women Home Tutor", link: "#" },
-      { name: "Women Legal Services", link: "https://morselv.com/service/25-specialized-personal-services" },
-      { name: "Female Local Meetup", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Kitty Party Venues", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Female Dietician", link: "https://morselv.com/service/19-diet-weight-management" },
-      { name: "Female Nutritionists", link: "https://morselv.com/service/19-diet-weight-management" },
-      { name: "Meditation Centre", link: "https://morselv.com/service/18-mental-emotional-wellness" },
-      { name: "Gynecologist", link: "https://morselv.com/service/15-health-wellness" },
-      { name: "Cosmetologist", link: "https://morselv.com/service/14-skin-hair-beauty/16-dermatologist" },
-      { name: "Women Jobs", link: "https://morselv.com/service/23-career-education" },
-      { name: "Women Legal Services", link: "https://morselv.com/service/25-specialized-personal-services" },
-      { name: "Women Party Place", link: "https://morselv.com/service/21-friends-fun-community" },
-      { name: "Women Career Coach", link: "https://morselv.com/service/25-specialized-personal-services" },
-      { name: "Women Entrepreneur", link: "https://morselv.com/service/23-career-education" },
-      { name: "Part Time Job For Women", link: "https://morselv.com/service/23-career-education" },
-      { name: "Women Coaching Centre", link: "https://morselv.com/service/24-child-hobbies-interests" },
-      { name: "Home-Based Job For Women", link: "#" },
+      { name: "Women Body Massage Centre", link: "/service/17-body-therapies" },
+      { name: "Beauty Spa For Women", link: "/service/17-body-therapies" },
+      { name: "Saloon", link: SALON },
+      { name: "Beauty Parlours", link: SALON },
+      { name: "Female Psychiatrists", link: "/service/18-mental-emotional-wellness" },
+      { name: "Yoga Class For Women", link: "/service/22-fitness-body-movement/19-yoga" },
+      { name: "Skin Care For Females", link: "/service/14-skin-hair-beauty" },
+      { name: "Female Physiotherapist", link: "/service/15-health-wellness/20-physiotherapy" },
+      { name: "Female Music Teacher", link: "/service/24-child-hobbies-interests/30-dance-singing-music" },
+      { name: "Female Hair Stylists", link: SALON },
+      { name: "Female Ayurvedic Doctor", link: "/service/15-health-wellness" },
+      { name: "Best Restaurants For Women", link: "/service/21-friends-fun-community/24-restobar" },
+      { name: "Female Yoga Trainer", link: "/service/22-fitness-body-movement/19-yoga" },
+      { name: "Education Consultant", link: "/service/23-career-education" },
+      { name: "Female Homoeopathic Doctor", link: "/service/15-health-wellness/21-homeopathy" },
+      { name: "Women Rejuvenation Center", link: "/service/17-body-therapies" },
+      { name: "Women Mental Health", link: "/service/18-mental-emotional-wellness" },
+      { name: "Women Life Coach", link: "/service/18-mental-emotional-wellness" },
+      { name: "Restaurants", link: "/service/21-friends-fun-community" },
+      { name: "Women friendly Bars", link: "/service/21-friends-fun-community/24-restobar" },
+      { name: "Online Classes for Women", link: "/service/23-career-education" },
+      { name: "Wellness Tourism For Women", link: "/service/17-body-therapies" },
+      { name: "Solo Female Travel Groups", link: "/service/21-friends-fun-community" },
+      { name: "Female Fitness Trainers", link: "/service/22-fitness-body-movement" },
+      { name: "Beauty & Fashion", link: "/service/14-skin-hair-beauty" },
+      { name: "Health & Fitness", link: "/service/22-fitness-body-movement" },
+      { name: "Education & Career", link: "/service/23-career-education" },
+      { name: "Makeup Artists", link: "/service/14-skin-hair-beauty/14-makeup-artist" },
+      { name: "Women Ayurvedic Doctor", link: "/service/15-health-wellness" },
+      { name: "Women Body Therapies", link: "/service/17-body-therapies" },
+      { name: "Women Party Groups", link: "/service/21-friends-fun-community" },
+      { name: "Women Home Tutor", link: "/service/23-career-education/29-academic-coaching" },
+      { name: "Women Legal Services", link: "/service/25-specialized-personal-services/32-legal-services" },
+      { name: "Female Local Meetup", link: "/service/21-friends-fun-community" },
+      { name: "Kitty Party Venues", link: "/service/21-friends-fun-community" },
+      { name: "Female Dietician", link: "/service/19-diet-weight-management" },
+      { name: "Female Nutritionists", link: "/service/19-diet-weight-management" },
+      { name: "Meditation Centre", link: "/service/18-mental-emotional-wellness" },
+      { name: "Gynecologist", link: "/service/15-health-wellness" },
+      { name: "Cosmetologist", link: "/service/14-skin-hair-beauty/16-dermatologist" },
+      { name: "Women Jobs", link: "/job-opportunities" },
+      { name: "Women Party Place", link: "/service/21-friends-fun-community" },
+      { name: "Women Career Coach", link: "/service/25-specialized-personal-services" },
+      { name: "Women Entrepreneur", link: "/service/23-career-education" },
+      { name: "Part Time Job For Women", link: "/job-opportunities" },
+      { name: "Women Coaching Centre", link: "/service/23-career-education/29-academic-coaching" },
+      { name: "Home-Based Job For Women", link: "/job-opportunities" },
     ];
 
 return (
@@ -78,13 +81,13 @@ return (
     >
       {data.map((item, index) => (
         <span key={index}>
-          <a
-            href={item.link}
+          <Link
+            to={item.link}
             className="hover:underline transition"
             style={{ textDecoration: 'none' }}
           >
             {item.name}
-          </a>
+          </Link>
           {index !== data.length - 1 && ' | '}
         </span>
       ))}

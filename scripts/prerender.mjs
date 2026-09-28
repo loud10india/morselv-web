@@ -21,7 +21,7 @@
  * catalogue URLs keep working through the client-side app (dist/spa.html).
  */
 import { createHash } from "node:crypto";
-import { mkdir, readFile, readdir, writeFile } from "node:fs/promises";
+import { mkdir, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import {
@@ -29,7 +29,6 @@ import {
   DEFAULT_LOCATION,
   DEFAULT_OG_IMAGE_PATH,
   DEFAULT_SITE_URL,
-  DEFAULT_TITLE,
   SITE_NAME,
   STATIC_PAGES,
   TWITTER_HANDLE,
@@ -40,6 +39,8 @@ import {
   cloudinaryUrl,
   dealMeta,
   dealPath,
+  fullTitle,
+  listingHeadingDetail,
   listingMeta,
   listingPath,
   listingPrefetchKey,
@@ -101,7 +102,7 @@ const crumbsNav = (crumbs) =>
 
 /** The <!--seo--> block of index.html, rebuilt for one page. */
 function headFor(meta) {
-  const title = meta.title ? `${cleanText(meta.title)} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const title = fullTitle(meta.title);
   const canonical = absoluteUrl(meta.path, SITE_URL);
   const image = meta.image || `${SITE_URL}${DEFAULT_OG_IMAGE_PATH}`;
   const isDefaultImage = !meta.image;
@@ -163,8 +164,10 @@ const shell = (main) =>
   )}</nav><p><a href="https://blog.morselv.com/">Blog</a></p></footer></div>`;
 
 let template;
-function render(meta, main) {
-  const head = headFor(meta);
+function render(meta, main, route) {
+  const head = [headFor(meta), ...(routeChunks[route] || []).map(
+    (href) => `<link rel="modulepreload" crossorigin href="${href}" />`
+  )].join("\n  ");
   return template
     .replace(/<!--seo-->[\s\S]*?<!--\/seo-->/, `<!--seo-->\n  ${head}\n  <!--/seo-->`)
     .replace('<div id="root"></div>', `<div id="root">${main ? shell(main) : ""}</div>`);
@@ -172,10 +175,10 @@ function render(meta, main) {
 
 const pages = []; // { path, html, indexable, lastmod, group }
 
-function addPage(meta, main, { group, lastmod, sitemap = true } = {}) {
+function addPage(meta, main, { group, lastmod, sitemap = true, route } = {}) {
   pages.push({
     path: meta.path,
-    html: render(meta, main),
+    html: render(meta, main, route),
     // Data-derived only (no asset names), so a code-only deploy leaves the
     // fingerprint unchanged.
     source: `${headFor(meta)}\n${main || ""}`,
@@ -241,7 +244,7 @@ function staticPages(categories) {
     if (path === "/faq") {
       main += FAQS.map((f) => `<h2>${esc(f.question)}</h2><p>${esc(f.answer)}</p>`).join("");
     }
-    addPage(meta, main, { group: "pages" });
+    addPage(meta, main, { group: "pages", route: path });
   }
 }
 
@@ -303,9 +306,9 @@ function listingPage({ base, category, subCategory, items, subs, sitemap = true 
     subNames: subs.map((s) => s.name),
     siteUrl: SITE_URL,
   });
-  const heading = `${isDeals ? "Exclusive Deals" : "SERVICE PROVIDERS"}${
-    category ? ` - ${cleanText(category.Name)}` : ""
-  }`;
+  // Same wording as the page's own <h1> (see listingHeadingDetail).
+  const detail = listingHeadingDetail(category, subCategory);
+  const heading = `${isDeals ? "Exclusive Deals" : "SERVICE PROVIDERS"}${detail ? ` - ${detail}` : ""}`;
   const noun = isDeals ? "deal" : "provider";
   const scope = [category?.Name, subCategory?.Name].map(cleanText).filter(Boolean).join(" / ");
   let main = `${crumbsNav(meta.crumbs)}<h1>${esc(heading)}</h1><p>${esc(meta.description)}</p>`;
@@ -318,13 +321,16 @@ function listingPage({ base, category, subCategory, items, subs, sitemap = true 
     scope ? ` in ${esc(scope)}` : ""
   }</h2>${list(items.map(isDeals ? dealLine : providerLine))}`;
   if (!isDeals) meta.preload = listingHead({ category, subCategory, items });
-  addPage(meta, main, { group: "listings", sitemap });
+  addPage(meta, main, { group: "listings", sitemap, route: base });
   return meta;
 }
 
 function providerPage(detail, siblings) {
   const [provider, services, images] = detail;
-  const meta = providerMeta(provider, { services, images, siteUrl: SITE_URL });
+  const meta = providerMeta(provider, { services, images, subCategories: publishedSubCategories, siteUrl: SITE_URL });
+  if (provider.SubCategoryID && meta.crumbs.length < 5) {
+    log(`provider ${provider.ID}: sub-category ${provider.SubCategoryID} is not published under category ${provider.catID}; breadcrumb stops at the category`);
+  }
   meta.preload = imagePreload(images.map((i) => i?.url).find(Boolean));
   const related = relatedByOrder(siblings, provider.ID);
   const cat = meta.crumbs.slice(2, -1); // category, sub-category crumbs
@@ -348,6 +354,7 @@ function providerPage(detail, siblings) {
   const modified = provider.ModifiedDate || provider.CreatedDate;
   addPage(meta, main, {
     group: "providers",
+    route: "provider",
     lastmod: modified ? new Date(modified).toISOString().slice(0, 10) : undefined,
   });
 }
@@ -366,7 +373,7 @@ function dealPage(deal, dealID) {
   if (cats.length) main += `<p>${esc(cats.join(" / "))}</p>`;
   if (cleanText(deal.FullAddress)) main += `<p>${esc(deal.FullAddress)}</p>`;
   if (deal.ImageName) main += `<img src="${esc(deal.ImageName)}" alt="${esc(meta.imageAlt)}" />`;
-  addPage(meta, main, { group: "deals" });
+  addPage(meta, main, { group: "deals", route: "deal" });
 }
 
 /* --------------------------------------------------------------- sitemap */
@@ -420,9 +427,65 @@ const imagePreload = (url) =>
       )}" fetchpriority="high" />`]
     : [];
 
+/* ------------------------------------------------------------ route code */
+
+// Each page type's code is a separate chunk (React.lazy in src/App.jsx). The
+// app only learns which one it needs after its main script has run, so each
+// pre-rendered page names its chunk up front and the browser fetches both in
+// parallel instead of one after the other.
+const ROUTE_MODULES = {
+  "/": "src/components/home/HomePage.jsx",
+  "/packages": "src/components/home/Packages.jsx",
+  "/ListYourBusiness": "src/components/home/ListYourBusiness.jsx",
+  "/job-opportunities": "src/components/home/JobOpportunities.jsx",
+  "/Careers": "src/components/home/Career.jsx",
+  "/AboutUS": "src/components/home/Aboutus.jsx",
+  "/HelpAndSupport": "src/components/home/HelpandSupport.jsx",
+  "/faq": "src/components/home/Faq.jsx",
+  "/PrivacyPolicy": "src/components/home/PrivacyPolicy.jsx",
+  "/TermsAndConditions": "src/components/home/TermsandConditions.jsx",
+  "/customer-panel": "src/components/home/CustomerPanel.jsx",
+  service: "src/components/service/ServiceListing.jsx",
+  deals: "src/components/deals/DealsSlider.jsx",
+  provider: "src/components/service/ServiceDetail.jsx",
+  deal: "src/components/deals/DealDetail.jsx",
+};
+const MANIFEST = join(DIST, ".vite", "manifest.json");
+
+let routeChunks = {};
+
+/** route -> chunk URLs it needs beyond what the main script already loads. */
+async function readRouteChunks() {
+  let manifest;
+  try {
+    manifest = JSON.parse(await readFile(MANIFEST, "utf8"));
+  } catch {
+    log("no build manifest (run the full build) - pages will not preload their route code");
+    return {};
+  }
+  const closure = (key, seen = new Set()) => {
+    if (!manifest[key] || seen.has(key)) return seen;
+    seen.add(key);
+    for (const dep of manifest[key].imports || []) closure(dep, seen);
+    return seen;
+  };
+  const entry = Object.keys(manifest).find((k) => manifest[k].isEntry);
+  const loaded = closure(entry);
+  const out = {};
+  for (const [route, source] of Object.entries(ROUTE_MODULES)) {
+    if (!manifest[source]) {
+      log(`no chunk for ${source} - its pages will not preload it`);
+      continue;
+    }
+    out[route] = [...closure(source)].filter((k) => !loaded.has(k)).map((k) => `/${manifest[k].file}`);
+  }
+  return out;
+}
+
 /* ------------------------------------------------------------------ main */
 
 let homePreloads = [];
+let publishedSubCategories;
 
 async function heroPreloads() {
   // The home page's largest image is a CSS background, which the browser's
@@ -455,6 +518,9 @@ async function main() {
   await writeFile(join(DIST, "spa.html"), template);
 
   homePreloads = await heroPreloads();
+  routeChunks = await readRouteChunks();
+  // The manifest is build metadata, not something to publish with the site.
+  await rm(join(DIST, ".vite"), { recursive: true, force: true });
 
   let categories = [];
   let subCategories = [];
@@ -467,6 +533,7 @@ async function main() {
       [categories, subCategories] = (
         await Promise.all([getJSON("/category"), getJSON("/subCategory")])
       ).map((d) => rows(d?.[0] ?? d));
+      publishedSubCategories = subCategories;
     } catch (err) {
       if (STRICT) throw new Error(`catalogue unavailable: ${err.message}`);
       catalogue = false;

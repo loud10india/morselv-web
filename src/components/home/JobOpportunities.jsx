@@ -139,7 +139,7 @@ function JobOpportunities() {
   const borderFor = (k) => (errors[k] ? "border-[#C0392B]" : "border-[#E0E0E0]");
 
   return (
-    <main className="w-full bg-white">
+    <div className="w-full bg-white">
       <Seo {...staticPageMeta("/job-opportunities")} />
 
       {/* Hero */}
@@ -408,7 +408,7 @@ function JobOpportunities() {
           )}
         </div>
       </section>
-    </main>
+    </div>
   );
 }
 

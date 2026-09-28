@@ -26,6 +26,8 @@ function ServicesHeading() {
             area: x.area,
           }))
         );
+      }).catch(() => {
+        /* the section stays empty */
       });
     }
   }, [location]);

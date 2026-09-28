@@ -5,7 +5,9 @@ import AboutBusinessSection from "./AboutBussiness";
 import ServicePopup from "./ServiceDetailPopup";
 import { useParams, useLocation, useNavigate, Link } from "react-router-dom";
 import providers from "../../api/providers";
+import subCategoryApi from "../../api/subCategory";
 import Seo from "../utils/Seo";
+import { prerenderedHtml } from "../../utils/prerendered";
 import Breadcrumbs from "../utils/Breadcrumbs";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 import {
@@ -24,7 +26,11 @@ const ServiceDetail = () => {
   const [serviceDataset, setServiceDataset] = useState([]);
   const [imagesDataset, setImagesDataset] = useState([]);
   const [isPopupOpen, setIsPopupOpen] = useState(false);
+  // loading | ready | missing (the API confirmed there is no such listing) |
+  // error (the request failed; nothing is known about the listing).
   const [status, setStatus] = useState("loading");
+  const [attempt, setAttempt] = useState(0);
+  const [subCategories, setSubCategories] = useState();
   const [related, setRelated] = useState([]);
   // Offerings render one layout for the current width instead of four
   // CSS-hidden copies.
@@ -64,21 +70,38 @@ const ServiceDetail = () => {
         setStatus("ready");
       })
       .catch(() => {
-        if (active) setStatus("missing");
+        // A failed request says nothing about whether the listing exists.
+        // Treating it as "missing" marked live pages noindex whenever the API
+        // had a bad moment.
+        if (active) setStatus("error");
       });
     return () => {
       active = false;
     };
-  }, [providerID]);
+  }, [providerID, attempt]);
+
+  // The published sub-categories keep the breadcrumb from linking to a listing
+  // that does not exist (see providerMeta). The page does not wait for them:
+  // until they arrive the provider's own category data is used.
+  useEffect(() => {
+    let active = true;
+    subCategoryApi
+      .getAllSubCategory()
+      .then((r) => active && setSubCategories(Array.isArray(r?.data?.[0]) ? r.data[0] : undefined))
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, []);
 
   // Title, description, canonical path, breadcrumbs and schema — computed by
   // the same code the build-time pre-render uses.
   const meta = useMemo(
     () =>
       status === "ready"
-        ? providerMeta(dataSet, { services: serviceDataset, images: imagesDataset })
+        ? providerMeta(dataSet, { services: serviceDataset, images: imagesDataset, subCategories })
         : null,
-    [status, dataSet, serviceDataset, imagesDataset]
+    [status, dataSet, serviceDataset, imagesDataset, subCategories]
   );
 
   // One URL per provider. The slug in the URL is decorative, so any text (or
@@ -109,10 +132,33 @@ const ServiceDetail = () => {
     };
   }, [status, dataSet.ID, dataSet.catID, dataSet.SubCategoryID]);
   
+  // No <Seo> while loading or after a failed request: the page's own title,
+  // canonical and structured data are already in the pre-rendered HTML, and a
+  // placeholder would replace them with generic values.
   if (status === "loading") {
+    return <div className="min-h-screen" aria-busy="true" />;
+  }
+
+  if (status === "error") {
+    // The request failed, so keep showing what the pre-rendered page said
+    // about this listing (its heading, details and links) under a retry notice.
+    const copy = prerenderedHtml(pathname);
     return (
-      <div className="min-h-screen" aria-busy="true">
-        <Seo title="Service Provider" />
+      <div className="flex mx-auto flex-col w-full">
+        <div
+          role="alert"
+          className="mx-auto mt-[100px] w-full max-w-[1280px] px-4 flex flex-wrap items-center justify-between gap-3 rounded-[10px] bg-[#FFF6E5] py-3 text-[#2D2D2D] font-montserrat text-[14px]"
+        >
+          <span>We couldn&apos;t load the latest details for this listing. Please check your connection.</span>
+          <button
+            type="button"
+            onClick={() => setAttempt((n) => n + 1)}
+            className="rounded-[8px] bg-[#2D2D2D] text-white font-semibold px-5 py-2 hover:opacity-90 transition"
+          >
+            Try again
+          </button>
+        </div>
+        {copy && <div className="prerendered-copy" dangerouslySetInnerHTML={{ __html: copy }} />}
       </div>
     );
   }
@@ -151,7 +197,7 @@ const ServiceDetail = () => {
 
   return (
     <div className="flex mx-auto flex-col w-full">
-      {meta ? <Seo {...meta} /> : <Seo title="Service Provider" />}
+      {meta && <Seo {...meta} />}
       {/* Content with padding */}
       <div className="px-3 sm:px-4 md:px-5">
         <HeaderSectionService

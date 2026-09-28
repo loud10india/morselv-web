@@ -84,6 +84,20 @@ export const truncate = (value, max = 155) => {
   )}…`;
 };
 
+// Search results show roughly 60 characters of a title, and Google displays the
+// site name (from the WebSite structured data) next to every result anyway. A
+// title that is already long keeps its own words rather than losing them to
+// " | Morselv" at the cut-off.
+export const TITLE_BRAND_LIMIT = 60;
+
+/** The <title> for a page title: "Title | Morselv" when it fits, else the title alone. */
+export const fullTitle = (title) => {
+  const text = cleanText(title);
+  if (!text) return DEFAULT_TITLE;
+  const branded = `${text} | ${SITE_NAME}`;
+  return branded.length <= TITLE_BRAND_LIMIT ? branded : text;
+};
+
 /** "Salon" -> "Salon Services"; "Legal services" stays as it is. */
 export const serviceLabel = (name) => {
   const text = cleanText(name);
@@ -213,6 +227,23 @@ const validCoordinate = (value, limit) => {
   return Number.isFinite(n) && n !== 0 && Math.abs(n) <= limit ? n : undefined;
 };
 
+/**
+ * The street part of a provider's address. Some listings only give
+ * "Bengaluru, Karnataka, India" as the full address, which would repeat the
+ * locality and region as a street; those have no street address to state.
+ */
+export const streetAddressOf = (provider) => {
+  const full = cleanText(provider?.FullAddress);
+  if (!full) return undefined;
+  const known = new Set(
+    [provider.LocationCity, provider.state, provider.pincode, "India", "IN"]
+      .map((v) => cleanText(v).toLowerCase())
+      .filter(Boolean)
+  );
+  const parts = full.split(",").map((p) => cleanText(p).toLowerCase()).filter(Boolean);
+  return parts.every((p) => known.has(p)) ? undefined : full;
+};
+
 /** Drops undefined, empty strings and empty arrays so the JSON stays clean. */
 const compact = (obj) =>
   Object.fromEntries(
@@ -262,7 +293,7 @@ export const localBusinessSchema = (
     address: cleanText(provider.FullAddress)
       ? compact({
           "@type": "PostalAddress",
-          streetAddress: cleanText(provider.FullAddress),
+          streetAddress: streetAddressOf(provider),
           addressLocality: cleanText(provider.LocationCity) || undefined,
           addressRegion: cleanText(provider.state) || undefined,
           postalCode: cleanText(provider.pincode) || undefined,
@@ -389,12 +420,25 @@ const withSuffix = (text, suffix) =>
   cleanText(text).length >= 90 ? cleanText(text) : `${cleanText(text)} ${suffix}`;
 
 /**
+ * Whether a provider's sub-category is one the site publishes under the
+ * provider's category. `subCategories` is the /subCategory list (rows with ID
+ * and CatID); without it the pairing is taken on trust.
+ */
+const publishedSubCategory = (provider, subCategories) =>
+  !Array.isArray(subCategories) ||
+  subCategories.some(
+    (s) => String(s.ID) === String(provider.SubCategoryID) && String(s.CatID) === String(provider.catID)
+  );
+
+/**
  * Provider detail page. `provider` is the getProviderByID row; services and
- * images are its second and third result sets.
+ * images are its second and third result sets. `subCategories` (optional)
+ * keeps the breadcrumb from linking to a sub-category page that does not exist
+ * when a provider's category data is inconsistent.
  */
 export const providerMeta = (
   provider,
-  { services = [], images = [], siteUrl = DEFAULT_SITE_URL } = {}
+  { services = [], images = [], subCategories, siteUrl = DEFAULT_SITE_URL } = {}
 ) => {
   const name = cleanText(provider.Name);
   const sub = cleanText(provider.SubCategory);
@@ -427,7 +471,7 @@ export const providerMeta = (
           path: listingPath("service", { ID: provider.catID, Name: category }),
         }
       : null,
-    provider.catID && provider.SubCategoryID && sub
+    provider.catID && provider.SubCategoryID && sub && publishedSubCategory(provider, subCategories)
       ? {
           name: sub,
           path: listingPath(
@@ -572,13 +616,28 @@ export const listingMeta = ({
     // with ~65 deals in all, the largest filter repeats 88% of /deals and the
     // rest hold a handful — so only /deals itself is indexed. Every filter
     // page stays reachable (follow), and every deal keeps its own page.
+    // While a category's count is not known yet (loading, or the API failed)
+    // the answer is null: the page leaves the robots tag it arrived with
+    // rather than guessing.
     noindex: isDeals
       ? Boolean(cat)
-      : Boolean(cat) && known && count < MIN_LISTING_ITEMS,
+      : !cat
+      ? false
+      : known
+      ? count < MIN_LISTING_ITEMS
+      : null,
     crumbs,
     schema: breadcrumbSchema(crumbs, siteUrl),
   };
 };
+
+/**
+ * The part of a listing's main heading after "SERVICE PROVIDERS - " or
+ * "Exclusive Deals - ": the most specific level the page is about, so a
+ * sub-category page is headed by its own name rather than its category's.
+ */
+export const listingHeadingDetail = (category, subCategory) =>
+  cleanText(category?.ID ? (subCategory?.ID && cleanText(subCategory.Name)) || category.Name : "");
 
 /**
  * A stable handful of neighbours for "more providers like this" links:

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import Header from "../home/Header";
 import { Outlet } from "react-router-dom";
 import GetEmailSection from "../home/GetEmailSection";
@@ -9,7 +9,11 @@ function Layout() {
     <div className="font-sans w-full bg-white min-h-screen flex flex-col">
       <Header />
       <main className="flex-grow">
-        <Outlet />
+        {/* Pages are loaded on demand (see App.jsx). The placeholder holds the
+            footer below the fold while a page's code arrives. */}
+        <Suspense fallback={<div className="min-h-screen" aria-busy="true" />}>
+          <Outlet />
+        </Suspense>
       </main>
       <GetEmailSection />
       <Footer/>

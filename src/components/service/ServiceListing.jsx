@@ -11,7 +11,8 @@ import providers from "../../api/providers";
 import { useLoc } from "../context/LocationContext";
 import { useLocation } from "react-router-dom";
 import Seo from "../utils/Seo";
-import { listingMeta } from "../../seo/siteConfig";
+import { listingHeadingDetail, listingMeta } from "../../seo/siteConfig";
+import { selectionFromPath } from "../../utils/listingSelection";
 import { listingPrefetchKey } from "../../seo/core.js";
 import { takePrefetch } from "../../utils/prefetch";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
@@ -36,16 +37,10 @@ function ServiceListing() {
   const [categoryList, setCategoryList] = useState([]);
   const [subCategoryList, setSubCategoryList] = useState([]);
   const [selectedCategory, setSelectedCategory] = useState(
-    categoryState ?? {
-      ID: 0,
-      Name: "",
-    }
+    () => categoryState ?? selectionFromPath(locationRouter.pathname).category
   );
   const [selectedSubCategory, setSelectedSubCategory] = useState(
-    subCategoryState ?? {
-      ID: 0,
-      Name: "",
-    }
+    () => subCategoryState ?? selectionFromPath(locationRouter.pathname).subCategory
   );
   const [selectedDistance, setSelectedDistance] = useState({});
   const [openNested, setOpenNested] = useState(null);
@@ -233,12 +228,15 @@ function ServiceListing() {
 
   // Load category + subcategory
   useEffect(() => {
-    category.getAllCategory().then((res) => {
-      setCategoryList(res.data[0]);
-    });
-    subCategory.getAllSubCategory().then((res) => {
-      setSubCategoryList(res.data[0]);
-    });
+    // On failure the filters stay empty and the URL's own labels are used.
+    category
+      .getAllCategory()
+      .then((res) => setCategoryList(res.data[0]))
+      .catch(() => {});
+    subCategory
+      .getAllSubCategory()
+      .then((res) => setSubCategoryList(res.data[0]))
+      .catch(() => {});
   }, []);
 
   // Merge categories with subcategories
@@ -733,6 +731,9 @@ function ServiceListing() {
 
   const unfiltered =
     selectedDistance.min === undefined && selectedDistance.max === undefined;
+  // The most specific level the page is about: a sub-category page is headed
+  // by its own name, not its category's.
+  const headingDetail = listingHeadingDetail(selectedCategory, selectedSubCategory);
   const listing = listingMeta({
     base: "service",
     category: selectedCategory.ID ? selectedCategory : null,
@@ -760,8 +761,8 @@ function ServiceListing() {
           <div className="mb-8">
             <DesktopHeading className="font-montserrat text-[32px] sm:text-4xl font-semibold text-[#2D2D2D] leading-[40px]">
               SERVICE PROVIDERS{" "}
-              {selectedCategory.Name && (
-                <span className="font-normal">- {selectedCategory.Name}</span>
+              {headingDetail && (
+                <span className="font-normal">- {headingDetail}</span>
               )}
             </DesktopHeading>
           </div>
@@ -1016,9 +1017,9 @@ function ServiceListing() {
         <div className="mb-6">
           <MobileHeading className="font-montserrat text-[18px] font-semibold text-[#000] leading-[22.5px]">
             SERVICE PROVIDERS{" "}
-            {selectedCategory.Name && (
-              <span className="font-normal">- {selectedCategory.Name}</span>
-            )}{" "}
+            {headingDetail && (
+                <span className="font-normal">- {headingDetail}</span>
+              )}{" "}
           </MobileHeading>
         </div>
 

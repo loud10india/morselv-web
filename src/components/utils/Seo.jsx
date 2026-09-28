@@ -3,10 +3,10 @@ import { useLocation } from "react-router-dom";
 import {
   DEFAULT_DESCRIPTION,
   DEFAULT_OG_IMAGE,
-  DEFAULT_TITLE,
   SITE_NAME,
   TWITTER_HANDLE,
   absoluteUrl,
+  fullTitle as titleFor,
   normalizePath,
 } from "../../seo/siteConfig";
 
@@ -54,6 +54,9 @@ const upsertLink = (rel, href) => {
  * (scripts/prerender.mjs writes them from the same src/seo/core.js), so
  * crawlers and link previews that do not run JavaScript see the right values.
  * This component keeps them correct as the visitor navigates client-side.
+ *
+ * `noindex: null` means "not known yet" (a listing whose result count has
+ * not arrived): the robots tag and canonical are left as they are.
  */
 function Seo({
   title,
@@ -67,21 +70,23 @@ function Seo({
 }) {
   const location = useLocation();
   const canonical = absoluteUrl(normalizePath(path ?? location.pathname));
-  const fullTitle = title ? `${title} | ${SITE_NAME}` : DEFAULT_TITLE;
+  const fullTitle = titleFor(title);
   const schemaKey = schema ? JSON.stringify(schema) : "";
 
   useEffect(() => {
     document.title = fullTitle;
 
     upsertMeta("name", "description", description);
-    upsertMeta(
-      "name",
-      "robots",
-      // follow: a thin or missing page should still pass its links on.
-      noindex ? "noindex, follow" : "index, follow, max-image-preview:large"
-    );
-    // A page that asks not to be indexed has no canonical to declare.
-    upsertLink("canonical", noindex ? null : canonical);
+    if (noindex !== null) {
+      upsertMeta(
+        "name",
+        "robots",
+        // follow: a thin or missing page should still pass its links on.
+        noindex ? "noindex, follow" : "index, follow, max-image-preview:large"
+      );
+      // A page that asks not to be indexed has no canonical to declare.
+      upsertLink("canonical", noindex ? null : canonical);
+    }
 
     upsertMeta("property", "og:site_name", SITE_NAME);
     upsertMeta("property", "og:type", type);
@@ -89,6 +94,11 @@ function Seo({
     upsertMeta("property", "og:description", description);
     upsertMeta("property", "og:url", canonical);
     upsertMeta("property", "og:image", image);
+    // Dimensions are only known for the site's default share image; a page's
+    // own photo must not inherit them.
+    const isDefaultImage = image === DEFAULT_OG_IMAGE;
+    upsertMeta("property", "og:image:width", isDefaultImage ? "1200" : null);
+    upsertMeta("property", "og:image:height", isDefaultImage ? "630" : null);
     upsertMeta("property", "og:image:alt", imageAlt || fullTitle);
     upsertMeta("property", "og:locale", "en_IN");
 

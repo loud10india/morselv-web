@@ -1,23 +1,28 @@
-import React from "react";
+import React, { lazy } from "react";
 import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import "./index.css";
-import HomePage from "./components/home/HomePage";
-import DealsSlider from "./components/deals/DealsSlider";
-import Aboutus from "./components/home/Aboutus";
-import Careers from "./components/home/Career";
-import ListYourBusiness from "./components/home/ListYourBusiness";
-import Packages from "./components/home/Packages";
-import CustomerPanel from "./components/home/CustomerPanel";
-import JobOpportunities from "./components/home/JobOpportunities";
-import HelpAndSupport from "./components/home/HelpandSupport";
-import Faq from "./components/home/Faq";
-import PrivacyPolicy from "./components/home/PrivacyPolicy";
-import TermsAndConditions from "./components/home/TermsandConditions";
-import DealDetail from "./components/deals/DealDetail";
-import ServiceListing from "./components/service/ServiceListing";
 import NotFound from "./components/utils/NotFound";
-import ServiceDetail from "./components/service/ServiceDetail";
 import Layout from "./components/utils/Layout";
+
+// One chunk per page type, so a visitor downloads the code for the page they
+// are on rather than for the whole site. Each pre-rendered page preloads its
+// own chunk (scripts/prerender.mjs), so this adds no extra round trip; the
+// loading boundary is in Layout, which keeps the header and footer in place.
+const HomePage = lazy(() => import("./components/home/HomePage"));
+const DealsSlider = lazy(() => import("./components/deals/DealsSlider"));
+const Aboutus = lazy(() => import("./components/home/Aboutus"));
+const Careers = lazy(() => import("./components/home/Career"));
+const ListYourBusiness = lazy(() => import("./components/home/ListYourBusiness"));
+const Packages = lazy(() => import("./components/home/Packages"));
+const CustomerPanel = lazy(() => import("./components/home/CustomerPanel"));
+const JobOpportunities = lazy(() => import("./components/home/JobOpportunities"));
+const HelpAndSupport = lazy(() => import("./components/home/HelpandSupport"));
+const Faq = lazy(() => import("./components/home/Faq"));
+const PrivacyPolicy = lazy(() => import("./components/home/PrivacyPolicy"));
+const TermsAndConditions = lazy(() => import("./components/home/TermsandConditions"));
+const DealDetail = lazy(() => import("./components/deals/DealDetail"));
+const ServiceListing = lazy(() => import("./components/service/ServiceListing"));
+const ServiceDetail = lazy(() => import("./components/service/ServiceDetail"));
 import ScrollToTop from "./components/ScrollToTop";
 import { ToastContainer } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";

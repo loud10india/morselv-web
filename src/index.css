@@ -24,3 +24,16 @@ html, body, #root {
   max-width: 100%;
   overflow-x: hidden;
 }
+
+/* The pre-rendered copy of a page, shown when its data could not be loaded
+   (utils/prerendered.js). Plain HTML, so it needs basic typography back. */
+.prerendered-copy { max-width: 1280px; margin: 0 auto; padding: 1.5rem 1rem 3rem; color: #2D2D2D; line-height: 1.6; }
+.prerendered-copy h1 { font-size: 1.75rem; font-weight: 700; margin: 0.75rem 0 1rem; }
+.prerendered-copy h2 { font-size: 1.25rem; font-weight: 600; margin: 1.75rem 0 0.5rem; }
+.prerendered-copy h3 { font-size: 1.05rem; font-weight: 600; margin: 1rem 0 0.25rem; }
+.prerendered-copy p { margin: 0 0 0.75rem; color: #4D4D4D; }
+.prerendered-copy ul { list-style: disc; padding-left: 1.25rem; margin: 0 0 1rem; }
+.prerendered-copy ol { display: flex; flex-wrap: wrap; gap: 0.25rem 0.5rem; list-style: none; padding: 0; font-size: 0.875rem; }
+.prerendered-copy ol li + li::before { content: "/"; margin-right: 0.5rem; color: #888; }
+.prerendered-copy a { color: #2D2D2D; text-decoration: underline; text-underline-offset: 2px; }
+.prerendered-copy img { max-width: min(100%, 480px); border-radius: 12px; margin: 1rem 0; }
