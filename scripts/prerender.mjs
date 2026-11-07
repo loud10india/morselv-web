@@ -29,6 +29,7 @@ import {
   DEFAULT_LOCATION,
   DEFAULT_OG_IMAGE_PATH,
   DEFAULT_SITE_URL,
+  HOME_TAGLINE,
   SITE_NAME,
   STATIC_PAGES,
   TWITTER_HANDLE,
@@ -236,6 +237,7 @@ function staticPages(categories) {
       meta.intro || meta.description
     )}</p>`;
     if (path === "/") {
+      main = main.replace("</h1>", `</h1><p>${esc(HOME_TAGLINE)}</p>`);
       main += `<h2>Browse by category</h2>${list(
         categories.map((c) => link(listingPath("service", { ID: c.ID, Name: c.label }), c.label))
       )}<p>${link("/service", "All services")} · ${link("/deals", "Deals around you")}</p>`;

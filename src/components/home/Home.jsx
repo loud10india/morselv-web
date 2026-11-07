@@ -1,9 +1,20 @@
 import React from "react";
 import bgImg from "../assets/bgImg.webp";
-import overlay from "../assets/contentoverlay.png";
 import SearchBar from "../home/SearchBar";
 import useMediaQuery, { minWidth } from "../../hooks/useMediaQuery";
 import tick from "../assets/tick.png";
+import { HOME_TAGLINE } from "../../seo/siteConfig";
+
+// The trust badge above the headline. It used to be an image of the text
+// ("Trusted by 2000+ women", alt="") — invisible to search engines and screen
+// readers, and only editable in an image editor. The last word is set in gold.
+const cut = HOME_TAGLINE.lastIndexOf(" ");
+const TrustBadge = () => (
+  <p className="inline-flex items-center whitespace-nowrap rounded-full border border-[#C8963E]/80 bg-[#0d0d0d]/90 px-6 py-[9px] font-montserrat text-[17px] leading-none text-white shadow-[0_6px_20px_rgba(0,0,0,0.45)]">
+    {HOME_TAGLINE.slice(0, cut)}
+    <span className="ml-[0.3em] text-[#FECD8C]">{HOME_TAGLINE.slice(cut + 1)}</span>
+  </p>
+);
 import bgimgmobile from "../assets/bgimgmobile.webp";
 
 function Home() {
@@ -22,13 +33,10 @@ function Home() {
           backgroundSize: 'cover',
         }}
       >        <div className="flex-1 flex flex-col items-center w-full">
-          <img 
-            src={overlay}
-            alt=""
-            width="345"
-            height="107"
-            className="w-[281px] h-[99px] mb-6 translate-y-10"
-          />
+          {/* Same box the badge image occupied, so nothing below moves. */}
+          <div className="h-[99px] mb-6 translate-y-10 flex items-center justify-center">
+            <TrustBadge />
+          </div>
           
           <DesktopHeading className="leading-[125%] tracking-[0%] font-montserrat font-light text-[#FECD8C] 
            mx-auto text-center md:text-7xl md:w-[80%] lg:w-[100%]"
@@ -79,9 +87,11 @@ function Home() {
       {/* Mobile Version */}
       <div className="md:hidden relative w-full pt-12 flex flex-col items-center min-h-screen"
            style={{ backgroundImage: `url(${bgimgmobile})`, backgroundSize: 'cover' }}>
-        {/* Intrinsic size lets the browser reserve the image's height before it
-            loads; without it the heading and search bar jumped down. */}
-        <img src={overlay} alt="" width="345" height="107" className="w-[350px] h-auto mb-4 pt-[70px]" />
+        {/* Fixed height: the space the badge image used to take (its 70px top
+            padding plus 109px at this width), so the layout below is unchanged. */}
+        <div className="pt-[70px] mb-4 h-[179px] flex items-center justify-center">
+          <TrustBadge />
+        </div>
        
         <MobileHeading className="leading-[125%] tracking-[0%]
            text-6xl sm:text-6xl font-montserrat font-light text-[#FECD8C] 

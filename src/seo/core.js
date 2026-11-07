@@ -19,6 +19,9 @@ export const DEFAULT_DESCRIPTION =
   "Discover trusted salons, spas, clinics, fitness studios and lifestyle experts near you. Compare verified providers, book services and unlock exclusive deals on Morselv.";
 
 export const TWITTER_HANDLE = "@morselv";
+
+// Shown under the home page headline, and in its pre-rendered copy.
+export const HOME_TAGLINE = "Trusted by 20,000+ women";
 export const DEFAULT_OG_IMAGE_PATH = "/og-image.jpg";
 export const LOGO_PATH = "/favicon.png";
 
